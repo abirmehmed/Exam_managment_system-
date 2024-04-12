@@ -13,7 +13,7 @@
         android:theme="@style/Theme.MyApplication"
         tools:targetApi="31">
         <activity
-            android:name=".LoginActivity"
+            android:name="com.example.myapplication.activities.LoginActivity"
             android:theme="@style/AppTheme.Login"
             android:exported="true">
             <intent-filter>
@@ -21,6 +21,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.example.myapplication.activities.RegistrationActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

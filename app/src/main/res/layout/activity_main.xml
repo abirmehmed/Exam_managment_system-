@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_background">
 
     <LinearLayout
         android:id="@+id/main"
@@ -30,6 +31,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/login"
+                android:textColor="@android:color/white"
                 android:textSize="32sp"
                 android:textStyle="bold" />
 
@@ -45,6 +47,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/username"
+                android:textColor="@android:color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -58,7 +61,8 @@
                 android:hint="@string/enter_username"
                 android:inputType="textPersonName"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp" />
+                android:paddingEnd="16dp"
+                android:textColor="@android:color/black" />
 
         </LinearLayout>
 
@@ -72,6 +76,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/password"
+                android:textColor="@android:color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -85,7 +90,8 @@
                 android:hint="@string/enter_password"
                 android:inputType="textPassword"
                 android:paddingStart="16dp"
-                android:paddingEnd="16dp" />
+                android:paddingEnd="16dp"
+                android:textColor="@android:color/black" />
 
         </LinearLayout>
 
@@ -100,13 +106,17 @@
                 android:id="@+id/rb_teacher"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/teacher" />
+                android:buttonTint="@android:color/white"
+                android:text="@string/teacher"
+                android:textColor="@android:color/white" />
 
             <RadioButton
                 android:id="@+id/rb_student"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/student" />
+                android:buttonTint="@android:color/white"
+                android:text="@string/student"
+                android:textColor="@android:color/white" />
 
         </RadioGroup>
 
