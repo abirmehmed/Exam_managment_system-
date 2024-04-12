@@ -18,4 +18,26 @@
     <string name="enter_username">Enter username</string>
     <string name="enter_password">Enter password</string>
 
+    <string name="welcome_message">Welcome, Teacher!</string>
+    <string name="exams_created">Exams Created</string>
+    <string name="upcoming_exams">Upcoming Exams</string>
+    <string name="pending_evaluations">Pending Evaluations</string>
+    <string name="create_exam">Create Exam</string>
+    <string name="manage_exams">Manage Exams</string>
+    <string name="evaluate_submissions">Evaluate Submissions</string>
+    <string name="publish_grades">Publish Grades</string>
+    <string name="view_student_progress">View Student Progress</string>
+    <string name="announcements">Announcements</string>
+    <string name="messaging">Messaging</string>
+    <string name="resource_library">Resource Library</string>
+    <string name="syllabus">Syllabus</string>
+    <string name="placeholder_count">0</string>
+
+    <string name="exam_management">Exam Management</string>
+    <string name="student_evaluation">Student Evaluation</string>
+    <string name="communication">Communication</string>
+    <string name="resource_center">Resource Center</string>
+
+
+
 </resources>
