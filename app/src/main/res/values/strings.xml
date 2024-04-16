@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Exam Management System</string>
     <string name="profile_photo">Profile Photo</string>
     <string name="login">Login</string>
     <string name="username">Username</string>
@@ -18,10 +18,26 @@
     <string name="enter_username">Enter username</string>
     <string name="enter_password">Enter password</string>
 
-    <string name="welcome_message">Welcome, Teacher!</string>
+    <string name="welcome_message">Welcome, Teacher 🎉 !</string>
     <string name="exams_created">Exams Created</string>
     <string name="upcoming_exams">Upcoming Exams</string>
     <string name="pending_evaluations">Pending Evaluations</string>
+    <string name="assignments">Assignments</string>
+    <string name="grades">Grades</string>
+    <string name="view_assignments">View Assignments</string>
+    <string name="view_exams">View Exams</string>
+    <string name="view_grades">View Grades</string>
+    <string name="student_actions">Student Actions</string>
+    <string name="placeholder_count">0</string>
+
+    <string name="exam_management">Exam Management</string>
+    <string name="student_evaluation">Student Evaluation</string>
+    <string name="communication">Communication</string>
+    <string name="settings">Settings</string>
+    <string name="log_out">Log Out</string>
+    <string name="dashboard_actions">Dashboard Actions</string>
+
+    <!-- New string resources added below -->
     <string name="create_exam">Create Exam</string>
     <string name="manage_exams">Manage Exams</string>
     <string name="evaluate_submissions">Evaluate Submissions</string>
@@ -31,13 +47,4 @@
     <string name="messaging">Messaging</string>
     <string name="resource_library">Resource Library</string>
     <string name="syllabus">Syllabus</string>
-    <string name="placeholder_count">0</string>
-
-    <string name="exam_management">Exam Management</string>
-    <string name="student_evaluation">Student Evaluation</string>
-    <string name="communication">Communication</string>
-    <string name="resource_center">Resource Center</string>
-
-
-
 </resources>

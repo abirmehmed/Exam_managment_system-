@@ -42,14 +42,14 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tv_exams_created"
+                        android:id="@+id/tv_assignments"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/exams_created"
+                        android:text="@string/assignments"
                         android:textAppearance="@style/TextAppearance.App.Headline" />
 
                     <TextView
-                        android:id="@+id/tv_exams_created_count"
+                        android:id="@+id/tv_assignments_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
@@ -90,14 +90,14 @@
                     android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/tv_pending_evaluations"
+                        android:id="@+id/tv_grades"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/pending_evaluations"
+                        android:text="@string/grades"
                         android:textAppearance="@style/TextAppearance.App.Headline" />
 
                     <TextView
-                        android:id="@+id/tv_pending_evaluations_count"
+                        android:id="@+id/tv_grades_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
@@ -121,36 +121,36 @@
             android:padding="24dp">
 
             <TextView
-                android:id="@+id/tv_dashboard_actions_title"
+                android:id="@+id/tv_student_actions_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:text="@string/dashboard_actions"
+                android:text="@string/student_actions"
                 android:textAppearance="@style/TextAppearance.App.Title" />
 
             <Button
-                android:id="@+id/btn_exam_management"
+                android:id="@+id/btn_view_assignments"
                 style="@style/Widget.App.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="@string/exam_management" />
+                android:text="@string/view_assignments" />
 
             <Button
-                android:id="@+id/btn_student_evaluation"
+                android:id="@+id/btn_view_exams"
                 style="@style/Widget.App.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/student_evaluation" />
+                android:text="@string/view_exams" />
 
             <Button
-                android:id="@+id/btn_communication"
+                android:id="@+id/btn_view_grades"
                 style="@style/Widget.App.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/communication" />
+                android:text="@string/view_grades" />
 
             <Button
                 android:id="@+id/btn_settings"

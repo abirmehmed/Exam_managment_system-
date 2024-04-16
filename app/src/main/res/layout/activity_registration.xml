@@ -182,6 +182,39 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <RadioGroup
+                android:id="@+id/rg_user_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rb_teacher"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="@android:color/white"
+                    android:text="@string/teacher"
+                    android:textColor="@android:color/white" />
+
+                <RadioButton
+                    android:id="@+id/rb_student"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="@android:color/white"
+                    android:text="@string/student"
+                    android:textColor="@android:color/white" />
+
+            </RadioGroup>
+
+        </LinearLayout>
+
         <Button
             android:id="@+id/btn_register"
             style="@style/Widget.AppCompat.Button.Colored"

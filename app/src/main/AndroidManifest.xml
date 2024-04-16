@@ -10,11 +10,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MyApplication"
+        android:theme="@style/Theme.ExamManagementSystem"
         tools:targetApi="31">
         <activity
-            android:name="com.example.myapplication.activities.LoginActivity"
-            android:theme="@style/AppTheme.Login"
+            android:name=".activities.LoginActivity"
+            android:theme="@style/Theme.ExamManagementSystem.Login"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,7 +22,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.example.myapplication.activities.RegistrationActivity"
+            android:name=".activities.RegistrationActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.TeacherHomepageActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.StudentHomepageActivity"
             android:exported="false" />
     </application>
 
