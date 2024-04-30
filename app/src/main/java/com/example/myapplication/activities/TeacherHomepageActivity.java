@@ -10,25 +10,41 @@ import com.example.myapplication.R;
 
 public class TeacherHomepageActivity extends AppCompatActivity {
 
+    private TextView tvWelcomeMessage;
+    private TextView tvExamsCreated;
+    private TextView tvExamsCreatedCount;
+    private TextView tvPendingEvaluations;
+    private TextView tvPendingEvaluationsCount;
+    private TextView tvTotalStudents;
+    private TextView tvTotalStudentsCount;
+
+    private Button btnExamManagement;
+    private Button btnStudentEvaluation;
+    private Button btnCommunication;
+    private Button btnNotifications;
+    private Button btnSettings;
+    private Button btnLogOut;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_teacher_homepage);
 
         // Find the views
-        TextView tvWelcomeMessage = findViewById(R.id.tv_welcome_message);
-        TextView tvExamsCreated = findViewById(R.id.tv_exams_created);
-        TextView tvExamsCreatedCount = findViewById(R.id.tv_exams_created_count);
-        TextView tvUpcomingExams = findViewById(R.id.tv_upcoming_exams);
-        TextView tvUpcomingExamsCount = findViewById(R.id.tv_upcoming_exams_count);
-        TextView tvPendingEvaluations = findViewById(R.id.tv_pending_evaluations);
-        TextView tvPendingEvaluationsCount = findViewById(R.id.tv_pending_evaluations_count);
+        tvWelcomeMessage = findViewById(R.id.tv_welcome_message);
+        tvExamsCreated = findViewById(R.id.tv_exams_created);
+        tvExamsCreatedCount = findViewById(R.id.tv_exams_created_count);
+        tvPendingEvaluations = findViewById(R.id.tv_pending_evaluations);
+        tvPendingEvaluationsCount = findViewById(R.id.tv_pending_evaluations_count);
+        tvTotalStudents = findViewById(R.id.tv_total_students);
+        tvTotalStudentsCount = findViewById(R.id.tv_total_students_count);
 
-        Button btnExamManagement = findViewById(R.id.btn_exam_management);
-        Button btnStudentEvaluation = findViewById(R.id.btn_student_evaluation);
-        Button btnCommunication = findViewById(R.id.btn_communication);
-        Button btnSettings = findViewById(R.id.btn_settings);
-        Button btnLogOut = findViewById(R.id.btn_log_out);
+        btnExamManagement = findViewById(R.id.btn_exam_management);
+        btnStudentEvaluation = findViewById(R.id.btn_student_evaluation);
+        btnCommunication = findViewById(R.id.btn_communication);
+        btnNotifications = findViewById(R.id.btn_notifications);
+        btnSettings = findViewById(R.id.btn_settings);
+        btnLogOut = findViewById(R.id.btn_log_out);
 
         // Set up click listeners for the buttons
         btnExamManagement.setOnClickListener(v -> {
@@ -41,6 +57,10 @@ public class TeacherHomepageActivity extends AppCompatActivity {
 
         btnCommunication.setOnClickListener(v -> {
             // Handle communication button click
+        });
+
+        btnNotifications.setOnClickListener(v -> {
+            // Handle notifications button click
         });
 
         btnSettings.setOnClickListener(v -> {

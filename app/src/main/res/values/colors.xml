@@ -22,4 +22,6 @@
     <color name="green">#98F098</color>
     <color name="gray">#808080</color>
 
+    <color name="notification_badge_color">#FF0000</color>
+
 </resources>
