@@ -41,4 +41,9 @@
     <string name="exam_date">Exam Date</string>
     <string name="exam_duration">Exam Duration (minutes)</string>
     <string name="create_exam_button">Create Exam</string>
+    <string name="notifications">Notifications</string>
+    <string name="attendance">Attendance</string>
+    <string name="exams">Exams</string>
+    <string name="view_attendance">View Attendance</string>
+    <string name="total_students">Total Students</string>
 </resources>

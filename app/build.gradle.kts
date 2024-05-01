@@ -7,6 +7,11 @@ android {
     namespace = "com.example.myapplication"
     compileSdk = 34
 
+    defaultConfig {
+        minSdk = 19 // Update this line
+        // Rest of the configuration
+    }
+
     // Rest of the Android configuration...
 }
 
@@ -15,6 +20,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
