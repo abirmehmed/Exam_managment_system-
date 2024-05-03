@@ -5,6 +5,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -56,9 +57,16 @@ public class ExamManagementActivity extends AppCompatActivity {
 
         // Set up Create Exam
         btnCreateExam.setOnClickListener(v -> {
-            String examTitle = etExamTitle.getText().toString();
-            String examDate = etExamDate.getText().toString();
-            int examDuration = Integer.parseInt(etExamDuration.getText().toString());
+            String examTitle = etExamTitle.getText().toString().trim();
+            String examDate = etExamDate.getText().toString().trim();
+            String examDurationText = etExamDuration.getText().toString().trim();
+
+            if (examTitle.isEmpty() || examDate.isEmpty() || examDurationText.isEmpty()) {
+                Toast.makeText(this, "Please fill in all the fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int examDuration = Integer.parseInt(examDurationText);
             createExam(examTitle, examDate, examDuration);
         });
     }
@@ -77,6 +85,7 @@ public class ExamManagementActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     // Handle error
+                    Toast.makeText(this, "Failed to load exam list: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -90,9 +99,11 @@ public class ExamManagementActivity extends AppCompatActivity {
                     examList.add(newExam);
                     examListAdapter.notifyItemInserted(examList.size() - 1);
                     clearCreateExamFields();
+                    loadExamList(); // Refresh the exam list
                 })
                 .addOnFailureListener(e -> {
                     // Handle error
+                    Toast.makeText(this, "Failed to create exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 

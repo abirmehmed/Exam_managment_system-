@@ -8,7 +8,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        minSdk = 19 // Update this line
+        minSdk = 23
         // Rest of the configuration
     }
 
@@ -20,10 +20,14 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation(libs.firebase.firestore)
+    implementation("com.google.firebase:firebase-firestore:24.4.1") {
+        exclude(group = "com.google.firebase", module = "firebase-common")
+    }
+    implementation("com.google.firebase:firebase-common:20.2.0")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore-ktx")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
-    implementation("com.google.firebase:firebase-firestore-ktx")
 }

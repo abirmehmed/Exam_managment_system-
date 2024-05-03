@@ -1,5 +1,6 @@
 package com.example.myapplication.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -49,6 +50,7 @@ public class TeacherHomepageActivity extends AppCompatActivity {
         // Set up click listeners for the buttons
         btnExamManagement.setOnClickListener(v -> {
             // Handle exam management button click
+            startExamManagementActivity();
         });
 
         btnStudentEvaluation.setOnClickListener(v -> {
@@ -69,6 +71,25 @@ public class TeacherHomepageActivity extends AppCompatActivity {
 
         btnLogOut.setOnClickListener(v -> {
             // Handle log out button click
+            logOut();
         });
+    }
+
+    private void startExamManagementActivity() {
+        // Start the ExamManagementActivity
+        Intent intent = new Intent(TeacherHomepageActivity.this, ExamManagementActivity.class);
+        startActivity(intent);
+    }
+
+    private void logOut() {
+        // Clear any user session or authentication data
+        // ...
+
+        // Start the LoginActivity
+        Intent intent = new Intent(TeacherHomepageActivity.this, LoginActivity.class);
+        startActivity(intent);
+
+        // Finish the current activity to prevent going back to it
+        finish();
     }
 }
