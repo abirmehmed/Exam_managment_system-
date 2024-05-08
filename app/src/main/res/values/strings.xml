@@ -46,4 +46,5 @@
     <string name="exams">Exams</string>
     <string name="view_attendance">View Attendance</string>
     <string name="total_students">Total Students</string>
+    <string name="profile_picture">Profile Picture</string>
 </resources>

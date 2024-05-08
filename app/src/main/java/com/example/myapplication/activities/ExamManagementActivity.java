@@ -1,10 +1,8 @@
 package com.example.myapplication.activities;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -76,12 +74,13 @@ public class ExamManagementActivity extends AppCompatActivity {
         db.collection("exams")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
+                    int oldSize = examList.size();
                     examList.clear();
                     for (DocumentSnapshot snapshot : queryDocumentSnapshots.getDocuments()) {
                         Exam exam = snapshot.toObject(Exam.class);
                         examList.add(exam);
                     }
-                    examListAdapter.notifyDataSetChanged();
+                    examListAdapter.notifyItemRangeInserted(oldSize, examList.size() - oldSize);
                 })
                 .addOnFailureListener(e -> {
                     // Handle error
@@ -96,8 +95,9 @@ public class ExamManagementActivity extends AppCompatActivity {
                 .add(newExam)
                 .addOnSuccessListener(documentReference -> {
                     // Exam created successfully
+                    int newItemIndex = examList.size();
                     examList.add(newExam);
-                    examListAdapter.notifyItemInserted(examList.size() - 1);
+                    examListAdapter.notifyItemInserted(newItemIndex);
                     clearCreateExamFields();
                     loadExamList(); // Refresh the exam list
                 })

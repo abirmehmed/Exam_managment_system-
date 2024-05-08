@@ -18,6 +18,8 @@ import com.google.firebase.auth.FirebaseUser;
 public class LoginActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
+    private RadioButton teacherRadioButton;
+    private RadioButton studentRadioButton;
     private RadioGroup roleRadioGroup;
 
     @Override
@@ -28,23 +30,25 @@ public class LoginActivity extends AppCompatActivity {
         // Initialize Firebase Authentication
         mAuth = FirebaseAuth.getInstance();
 
-        EditText usernameEditText = findViewById(R.id.et_username);
+        EditText emailEditText = findViewById(R.id.et_email);
         EditText passwordEditText = findViewById(R.id.et_password);
         Button loginButton = findViewById(R.id.btn_login);
         Button registerButton = findViewById(R.id.btn_register);
-        roleRadioGroup = findViewById(R.id.rg_role);
+        roleRadioGroup = findViewById(R.id.rg_role); // Find the RadioGroup
+        teacherRadioButton = findViewById(R.id.rb_teacher);
+        studentRadioButton = findViewById(R.id.rb_student);
 
         loginButton.setOnClickListener(v -> {
-            String email = usernameEditText.getText().toString().trim();
+            String email = emailEditText.getText().toString().trim();
             String password = passwordEditText.getText().toString().trim();
 
             if (TextUtils.isEmpty(email)) {
-                // Handle empty email
+                emailEditText.setError("Email is required.");
                 return;
             }
 
             if (TextUtils.isEmpty(password)) {
-                // Handle empty password
+                passwordEditText.setError("Password is required.");
                 return;
             }
 
@@ -64,6 +68,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         registerButton.setOnClickListener(v -> {
+            // Navigate to the RegistrationActivity
             Intent intent = new Intent(LoginActivity.this, RegistrationActivity.class);
             startActivity(intent);
         });
@@ -71,18 +76,17 @@ public class LoginActivity extends AppCompatActivity {
 
     private void handleUserRole(FirebaseUser user) {
         int selectedRoleId = roleRadioGroup.getCheckedRadioButtonId();
-        RadioButton selectedRoleRadioButton = findViewById(selectedRoleId);
-
-        if (selectedRoleRadioButton.getId() == R.id.rb_teacher) {
+        if (selectedRoleId == R.id.rb_teacher) {
             // Proceed to TeacherHomepageActivity
             Intent intent = new Intent(this, TeacherHomepageActivity.class);
             startActivity(intent);
-        } else if (selectedRoleRadioButton.getId() == R.id.rb_student) {
+        } else if (selectedRoleId == R.id.rb_student) {
             // Proceed to StudentHomepageActivity
             Intent intent = new Intent(this, StudentHomepageActivity.class);
             startActivity(intent);
         } else {
-            // Handle other login scenarios
+            // No radio button selected
+            Toast.makeText(this, "Please select a user role.", Toast.LENGTH_SHORT).show();
         }
     }
 }

@@ -1,22 +1,16 @@
 package com.example.myapplication.models;
 
 public class UserData {
-    private String username;
-    private String dateOfBirth;
-    private String userType;
+    private final String username;
+    private final String userType;
 
-    public UserData(String username, String dateOfBirth, String userType) {
+    public UserData(String username, String userType) {
         this.username = username;
-        this.dateOfBirth = dateOfBirth;
         this.userType = userType;
     }
 
     public String getUsername() {
         return username;
-    }
-
-    public String getDateOfBirth() {
-        return dateOfBirth;
     }
 
     public String getUserType() {
