@@ -47,4 +47,27 @@
     <string name="view_attendance">View Attendance</string>
     <string name="total_students">Total Students</string>
     <string name="profile_picture">Profile Picture</string>
+    <string name="create_exam_framework">Create Exam Framework</string>
+    <string name="save_exam">Save Exam</string>
+    <string name="add_question">Add Question</string>
+    <string name="question_text">Question Text</string>
+    <string name="question_answer">Answer</string>
+
+    <string name="question_options">Question Options</string>
+    <string name="option_1">Option 1</string>
+    <string name="option_2">Option 2</string>
+    <string name="add_option">Add Option</string>
+    <string name="answer">Answer</string>
+
+    <string-array name="question_types">
+        <item>Multiple Choice</item>
+        <item>True/False</item>
+        <item>Short Answer</item>
+    </string-array>
+
+
+        <string name="true_option">True</string>
+        <string name="false_option">False</string>
+
+
 </resources>

@@ -73,7 +73,7 @@
                     android:id="@+id/tv_create_exam_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/create_exam"
+                    android:text="@string/create_exam_framework"
                     android:textAppearance="@style/TextAppearance.App.Title" />
 
                 <EditText
@@ -106,7 +106,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:text="@string/create_exam" />
+                    android:text="@string/create_exam_framework" />
 
             </LinearLayout>
 

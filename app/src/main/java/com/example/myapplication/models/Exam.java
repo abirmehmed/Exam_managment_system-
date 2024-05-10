@@ -5,6 +5,11 @@ public class Exam {
     private String date;
     private int duration;
 
+    // Add this no-argument constructor
+    public Exam() {
+        // This constructor can be left empty
+    }
+
     public Exam(String title, String date, int duration) {
         this.title = title;
         this.date = date;
