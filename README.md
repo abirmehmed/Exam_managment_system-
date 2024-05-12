@@ -1,58 +1,38 @@
-Sure, I can provide you with a step-by-step algorithmic approach to implement the desired functionality. Here's how you can proceed:
+To achieve the desired functionality in the `QuestionEditorActivity`, you'll need to implement some logic in the Java code to handle the different question types and dynamically update the UI accordingly. Here's a step-by-step guide on how you can approach this:
 
-1. **Create a new activity for editing a specific question**:
-   - Create a new activity called `QuestionEditorActivity`.
-   - Design a layout file (`activity_question_editor.xml`) for this activity, which will display the question details (text, type, options, answer) and allow the user to edit them.
+1. **Initialize the UI elements in the `onCreate` method**:
+   - Find and initialize the `EditText` views for the question text (`et_question_text`) and answer (`et_question_answer`).
+   - Find and initialize the `Spinner` for the question type (`spinner_question_type`).
+   - Find and initialize the `LinearLayout` for the question options (`ll_question_options`).
 
-2. **Update the `QuestionAdapter` to handle click events**:
-   - In the `QuestionAdapter`, override the `onBindViewHolder` method to set an `OnClickListener` for each question item in the `RecyclerView`.
-   - When a question item is clicked, launch the `QuestionEditorActivity` and pass the corresponding `Question` object as an extra in the intent.
+2. **Set up the `Spinner` for the question types**:
+   - Create a `String` array resource (`question_types.xml`) in the `res/values` folder with the question type options (e.g., "Multiple Choice", "True/False", "Short Answer").
+   - In the `onCreate` method, set up an `OnItemSelectedListener` for the `spinner_question_type` to listen for changes in the selected question type.
 
-3. **Implement the `QuestionEditorActivity`**:
-   - In the `onCreate` method of `QuestionEditorActivity`, retrieve the `Question` object from the intent extras.
-   - Find the views in the layout file and populate them with the question details.
-   - Implement methods to handle changes made to the question details (e.g., updating the question text, options, or answer).
-   - Implement a method to save the updated question details back to Firestore.
+3. **Handle the question type selection**:
+   - In the `OnItemSelectedListener` of the `spinner_question_type`, implement logic to show or hide the relevant UI elements based on the selected question type.
+   - For "Multiple Choice" questions:
+     - Show the `ll_question_options` `LinearLayout`.
+     - Dynamically add `EditText` views to the `ll_question_options` for the user to enter the options (you can create a fixed number of options, e.g., 4).
+     - Show the `et_question_answer` `EditText` for the user to enter the correct answer.
+   - For "True/False" questions:
+     - Show the `ll_question_options` `LinearLayout`.
+     - Dynamically add two `EditText` views to the `ll_question_options` with the text "True" and "False".
+     - Show the `et_question_answer` `EditText` for the user to enter the correct answer ("True" or "False").
+   - For "Short Answer" questions:
+     - Hide the `ll_question_options` `LinearLayout`.
+     - Show the `et_question_answer` `EditText` for the user to enter the correct answer.
 
-4. **Update the `ExamEditorActivity` to handle question editing**:
-   - In the `ExamEditorActivity`, create a method to handle the updated question data from the `QuestionEditorActivity`.
-   - When the `QuestionEditorActivity` finishes and returns the updated question data, update the corresponding `Question` object in the `questions` list.
-   - Call `notifyDataSetChanged` on the `QuestionAdapter` to reflect the changes in the `RecyclerView`.
+4. **Implement the "Save" button functionality**:
+   - Set an `OnClickListener` for the `btn_save_question` button.
+   - In the `onClick` method, retrieve the user input from the relevant UI elements based on the selected question type.
+   - Create a new `Question` object with the retrieved data.
+   - Set the result and finish the activity, passing the new `Question` object back to the `ExamEditorActivity`.
 
-5. **Implement the functionality to delete a question**:
-   - In the `QuestionAdapter`, add a delete button or option for each question item.
-   - When the delete button or option is clicked, remove the corresponding `Question` object from the `questions` list.
-   - Call `notifyDataSetChanged` on the `QuestionAdapter` to reflect the changes in the `RecyclerView`.
-   - Implement a method in the `ExamEditorActivity` to delete the question from Firestore.
+5. **Implement the "Delete" button functionality (if needed)**:
+   - Set an `OnClickListener` for the `btn_delete_question` button.
+   - In the `onClick` method, implement the logic to delete the question (if applicable).
 
-6. **Implement the functionality to rearrange questions**:
-   - Use a library like `androidx.recyclerview.widget.ItemTouchHelper` to enable drag-and-drop functionality in the `RecyclerView`.
-   - Implement the `onMove` method in the `ItemTouchHelper.Callback` to handle the rearranging of questions in the `questions` list.
-   - Call `notifyItemMoved` on the `QuestionAdapter` to reflect the changes in the `RecyclerView`.
-   - Implement a method in the `ExamEditorActivity` to update the question order in Firestore.
+By following these steps, you'll be able to create a dynamic UI that adapts to the selected question type, allowing the user to enter the necessary information for each type of question. Additionally, you'll be able to save the new question and pass it back to the `ExamEditorActivity` for further processing.
 
-7. **Implement the functionality to add a new question**:
-   - In the `ExamEditorActivity`, create a method to handle the addition of a new question.
-   - When the user clicks the "Add Question" button or option, show the `AddQuestionDialog`.
-   - In the `AddQuestionDialog`, collect the question details from the user.
-   - When the user confirms the addition of the new question, create a new `Question` object and add it to the `questions` list.
-   - Call `notifyDataSetChanged` on the `QuestionAdapter` to reflect the changes in the `RecyclerView`.
-   - Implement a method in the `ExamEditorActivity` to add the new question to Firestore.
-
-8. **Implement the functionality to save the exam framework**:
-   - In the `ExamEditorActivity`, create a method to save the entire exam framework (including the updated questions) to Firestore.
-   - This method should be called when the user clicks the "Save" button or option.
-   - Update the exam framework document in Firestore with the latest data, including the updated questions list.
-
-9. **Handle navigation and data flow**:
-   - When navigating from the `ExamEditorActivity` to the `QuestionEditorActivity`, pass the `Question` object as an extra in the intent.
-   - When returning from the `QuestionEditorActivity`, retrieve the updated `Question` object from the intent extras and update the corresponding object in the `questions` list.
-   - When adding a new question from the `AddQuestionDialog`, create a new `Question` object and add it to the `questions` list.
-   - When deleting or rearranging questions, update the `questions` list accordingly.
-
-10. **Implement the functionality to edit exam details (title, date, duration)**:
-    - In the `ExamEditorActivity` layout file, add `EditText` views or other appropriate UI elements to display and edit the exam title, date, and duration.
-    - Implement methods to handle changes made to the exam details.
-    - When saving the exam framework, update the exam details in Firestore along with the updated questions list.
-
-By following these steps, you should be able to implement the desired functionality for editing and customizing the exam framework, including adding, editing, deleting, and rearranging questions, as well as editing the exam details. Remember to handle error cases, provide appropriate user feedback, and test your implementation thoroughly.
+Note: You'll need to implement the necessary methods and logic in the `QuestionEditorActivity` Java class to handle the UI updates, user input, and result passing. The provided code snippets are just guidelines, and you'll need to adapt them to your specific implementation.
