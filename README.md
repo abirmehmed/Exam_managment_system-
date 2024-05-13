@@ -1,47 +1,104 @@
-To implement the exam editor functionality, you'll need to create the following components:
+To display the newly added question in the `ExamEditorActivity` after clicking the "Save" button in the `QuestionEditorActivity`, you need to implement the following steps:
 
-1. **Layouts**:
-   - `activity_exam_editor.xml` or `fragment_exam_editor.xml`: The main layout for the exam editor screen.
-   - `item_question.xml`: The layout for each question item in the exam.
-   - `dialog_add_question.xml`: The layout for the dialog or activity to add a new question.
+1. In the `QuestionEditorActivity`, when the "Save" button is clicked, create a new `Question` object with the user input data and pass it back to the `ExamEditorActivity` using an `Intent`.
 
-2. **Activities/Fragments**:
-   - `ExamEditorActivity` or `ExamEditorFragment`: The main class that handles the exam editing functionality.
-   - `AddQuestionDialogFragment` or `AddQuestionActivity`: The class that handles the addition of new questions.
+```java
+// In the QuestionEditorActivity
+private void saveQuestion() {
+    // Get the user input data
+    String questionText = etQuestionText.getText().toString();
+    int questionTypePosition = spinnerQuestionType.getSelectedItemPosition();
+    QuestionType questionType = QuestionType.values()[questionTypePosition];
+    List<String> options = getOptionsFromLayout();
+    String answer = etQuestionAnswer.getText().toString();
 
-3. **Adapters**:
-   - `QuestionAdapter`: The adapter class that manages the list of questions in the exam.
+    // Create a new Question object
+    Question newQuestion = new Question(questionText, questionType, options, answer);
 
-4. **Models**:
-   - `Question`: The data model class for a single question.
-   - `Exam`: The data model class for the complete exam, including the questions.
+    // Pass the new question back to the ExamEditorActivity
+    Intent resultIntent = new Intent();
+    resultIntent.putExtra("newQuestion", GSON.toJson(newQuestion));
+    setResult(RESULT_OK, resultIntent);
+    finish();
+}
+```
 
-5. **Utilities**:
-   - `QuestionFactory`: A utility class to create different types of questions (multiple-choice, true/false, short answer, etc.).
-   - `DragAndDropHelper`: A utility class to handle the drag-and-drop functionality for rearranging questions.
+2. In the `ExamEditorActivity`, override the `onActivityResult` method to handle the result from the `QuestionEditorActivity`.
 
-Here's a breakdown of the components and their responsibilities:
+```java
+// In the ExamEditorActivity
+private static final int REQUEST_CODE_ADD_QUESTION = 1;
+private List<Question> questions = new ArrayList<>();
+private QuestionAdapter questionAdapter;
 
-1. **Layouts**:
-   - `activity_exam_editor.xml` or `fragment_exam_editor.xml`: Provides the UI structure for the exam editor screen, including the toolbar, the question list, and the floating action button to add new questions.
-   - `item_question.xml`: Defines the layout for each individual question item, including the question text, question type-specific UI elements (e.g., radio buttons, text fields), and any additional controls.
-   - `dialog_add_question.xml`: Defines the layout for the dialog or activity that allows the user to select the question type and create a new question.
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_exam_editor);
 
-2. **Activities/Fragments**:
-   - `ExamEditorActivity` or `ExamEditorFragment`: Handles the logic for loading the exam framework, displaying the question list, adding/editing/deleting questions, and saving the complete exam data to Firestore.
-   - `AddQuestionDialogFragment` or `AddQuestionActivity`: Handles the logic for creating a new question, including selecting the question type and initializing the appropriate UI elements.
+    // Initialize the RecyclerView and adapter
+    RecyclerView rvQuestions = findViewById(R.id.rv_questions);
+    rvQuestions.setLayoutManager(new LinearLayoutManager(this));
+    questionAdapter = new QuestionAdapter(questions);
+    rvQuestions.setAdapter(questionAdapter);
 
-3. **Adapters**:
-   - `QuestionAdapter`: Manages the list of questions in the exam, providing methods to add, update, and remove questions, as well as handle the drag-and-drop functionality for rearranging the questions.
+    // ...
+}
 
-4. **Models**:
-   - `Question`: Represents a single question, including its type, text, and any additional data required for the specific question type (e.g., options for multiple-choice, correct answer for true/false).
-   - `Exam`: Represents the complete exam, including the exam framework data (title, date, duration) and the list of questions.
+@Override
+protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
 
-5. **Utilities**:
-   - `QuestionFactory`: Provides methods to create different types of questions (multiple-choice, true/false, short answer, etc.), ensuring consistency in the question creation process.
-   - `DragAndDropHelper`: Handles the logic for the drag-and-drop functionality, allowing the user to rearrange the order of the questions in the exam.
+    if (requestCode == REQUEST_CODE_ADD_QUESTION && resultCode == RESULT_OK) {
+        if (data != null) {
+            String newQuestionJson = data.getStringExtra("newQuestion");
+            Question newQuestion = GSON.fromJson(newQuestionJson, Question.class);
+            questions.add(newQuestion);
+            questionAdapter.notifyDataSetChanged();
+        }
+    }
+}
+```
 
-By creating these components, you'll have a well-structured and modular codebase that can handle the exam editing functionality effectively. This approach will also make it easier to maintain and extend the app in the future.
+In the `onActivityResult` method, we check if the request code matches `REQUEST_CODE_ADD_QUESTION` and the result code is `RESULT_OK`. If both conditions are met, we retrieve the `newQuestion` object from the `Intent` data, add it to the `questions` list, and notify the `questionAdapter` about the data set change.
 
-Let me know if you have any specific questions or need further assistance with the implementation of these components.
+3. In the `QuestionAdapter`, update the `bind` method in the `QuestionViewHolder` to display the question data correctly.
+
+```java
+// In the QuestionViewHolder class
+public void bind(Question question, int position) {
+    questionNumberTextView.setText(String.format("%02d)", position + 1));
+    questionTextView.setText(question.getText());
+
+    if (question.getType() == QuestionType.MULTIPLE_CHOICE) {
+        // Inflate and populate the options for multiple-choice questions
+        optionsLayout.removeAllViews();
+        for (int i = 0; i < question.getOptions().size(); i++) {
+            TextView optionTextView = new TextView(itemView.getContext());
+            optionTextView.setText(String.format("%s) %s", getOptionLetter(i), question.getOptions().get(i)));
+            optionsLayout.addView(optionTextView);
+        }
+        answerEditText.setVisibility(View.GONE);
+    } else if (question.getType() == QuestionType.TRUE_FALSE) {
+        // Inflate and populate the options for true/false questions
+        optionsLayout.removeAllViews();
+        TextView trueOptionTextView = new TextView(itemView.getContext());
+        trueOptionTextView.setText("True");
+        optionsLayout.addView(trueOptionTextView);
+
+        TextView falseOptionTextView = new TextView(itemView.getContext());
+        falseOptionTextView.setText("False");
+        optionsLayout.addView(falseOptionTextView);
+        answerEditText.setVisibility(View.GONE);
+    } else if (question.getType() == QuestionType.SHORT_ANSWER) {
+        // Show the EditText for short answer questions
+        optionsLayout.setVisibility(View.GONE);
+        answerEditText.setVisibility(View.VISIBLE);
+        answerEditText.setHint("Answer");
+    }
+}
+```
+
+After implementing these steps, when you click the "Save" button in the `QuestionEditorActivity`, the new question should be added to the `questions` list and displayed in the `RecyclerView` of the `ExamEditorActivity`.
+
+Note: Make sure to import the necessary classes and define the `GSON` object in both activities. Also, ensure that the `Question` and `QuestionType` classes are correctly implemented with the required fields and methods.
