@@ -28,6 +28,14 @@
                 android:textStyle="bold" />
 
             <Button
+                android:id="@+id/btn_add_question"
+                style="@style/Widget.App.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_question"
+                android:textColor="@android:color/white" />
+
+            <Button
                 android:id="@+id/btn_save_exam"
                 style="@style/Widget.App.Button.TextButton"
                 android:layout_width="wrap_content"
@@ -38,6 +46,7 @@
         </LinearLayout>
 
     </androidx.appcompat.widget.Toolbar>
+
 
     <ScrollView
         android:layout_width="match_parent"

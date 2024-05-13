@@ -1,5 +1,6 @@
 package com.example.myapplication.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,7 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExamManagementActivity extends AppCompatActivity {
+public class ExamManagementActivity extends AppCompatActivity implements ExamListAdapter.OnExamClickListener {
 
     private RecyclerView rvExamList;
     private ExamListAdapter examListAdapter;
@@ -51,6 +52,7 @@ public class ExamManagementActivity extends AppCompatActivity {
         examListAdapter = new ExamListAdapter(examList);
         rvExamList.setLayoutManager(new LinearLayoutManager(this));
         rvExamList.setAdapter(examListAdapter);
+        examListAdapter.setOnExamClickListener(this); // Set the OnExamClickListener
         loadExamList();
 
         // Set up Create Exam
@@ -112,4 +114,13 @@ public class ExamManagementActivity extends AppCompatActivity {
         etExamDate.setText("");
         etExamDuration.setText("");
     }
+
+    @Override
+    public void onExamClick(Exam exam) {
+        // Launch the ExamEditorActivity and pass the exam title
+        Intent intent = new Intent(this, ExamEditorActivity.class);
+        intent.putExtra("examTitle", exam.getTitle());
+        startActivity(intent);
+    }
 }
+

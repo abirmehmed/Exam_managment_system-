@@ -16,9 +16,14 @@ import java.util.List;
 public class ExamListAdapter extends RecyclerView.Adapter<ExamListAdapter.ExamViewHolder> {
 
     private List<Exam> examList;
+    private OnExamClickListener onExamClickListener;
 
     public ExamListAdapter(List<Exam> examList) {
         this.examList = examList;
+    }
+
+    public void setOnExamClickListener(OnExamClickListener listener) {
+        this.onExamClickListener = listener;
     }
 
     @NonNull
@@ -32,14 +37,21 @@ public class ExamListAdapter extends RecyclerView.Adapter<ExamListAdapter.ExamVi
     @Override
     public void onBindViewHolder(@NonNull ExamViewHolder holder, int position) {
         Exam exam = examList.get(position);
-        holder.tvExamTitle.setText(exam.getTitle());
-        holder.tvExamDate.setText(exam.getDate());
-        holder.tvExamDuration.setText(String.valueOf(exam.getDuration()) + " minutes");
+        holder.bind(exam);
+        holder.itemView.setOnClickListener(v -> {
+            if (onExamClickListener != null) {
+                onExamClickListener.onExamClick(exam);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
         return examList.size();
+    }
+
+    public interface OnExamClickListener {
+        void onExamClick(Exam exam);
     }
 
     static class ExamViewHolder extends RecyclerView.ViewHolder {
@@ -52,6 +64,12 @@ public class ExamListAdapter extends RecyclerView.Adapter<ExamListAdapter.ExamVi
             tvExamTitle = itemView.findViewById(R.id.tv_exam_title);
             tvExamDate = itemView.findViewById(R.id.tv_exam_date);
             tvExamDuration = itemView.findViewById(R.id.tv_exam_duration);
+        }
+
+        void bind(Exam exam) {
+            tvExamTitle.setText(exam.getTitle());
+            tvExamDate.setText(exam.getDate());
+            tvExamDuration.setText(String.valueOf(exam.getDuration()) + " minutes");
         }
     }
 }

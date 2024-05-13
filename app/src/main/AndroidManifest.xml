@@ -11,7 +11,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ExamManagementSystem"
-        tools:targetApi="31">
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="33">
+
         <activity
             android:name=".activities.LoginActivity"
             android:theme="@style/Theme.ExamManagementSystem.Login"
@@ -33,6 +35,14 @@
         <activity
             android:name=".activities.ExamManagementActivity"
             android:exported="false" />
+        <activity
+            android:name=".activities.ExamEditorActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.AddQuestionDialog"
+            android:exported="false" />
+        <activity
+            android:name=".activities.QuestionEditorActivity" />
     </application>
 
 </manifest>

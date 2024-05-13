@@ -69,5 +69,10 @@
         <string name="true_option">True</string>
         <string name="false_option">False</string>
 
+    <string name="edit_question">Edit Question</string>
+    <string name="delete_question">Delete Question</string>
+
+    <string name="answer_hint">Answer Hint</string>
+
 
 </resources>

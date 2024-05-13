@@ -5,7 +5,7 @@ public class Exam {
     private String date;
     private int duration;
 
-    // Add this no-argument constructor
+    // No-argument constructor
     public Exam() {
         // This constructor can be left empty
     }
@@ -16,6 +16,7 @@ public class Exam {
         this.duration = duration;
     }
 
+    // Getter methods
     public String getTitle() {
         return title;
     }

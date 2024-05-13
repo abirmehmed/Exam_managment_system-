@@ -1,6 +1,5 @@
 package com.example.myapplication.models;
 
-
 import java.util.List;
 
 public class Question {

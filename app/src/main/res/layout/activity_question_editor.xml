@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -9,7 +9,7 @@
         android:id="@+id/et_question_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/question_text"
+        android:hint="Question Text"
         android:inputType="textMultiLine" />
 
     <Spinner
@@ -23,42 +23,43 @@
         android:id="@+id/ll_question_options"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:orientation="vertical"
         android:visibility="gone">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/question_options"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1" />
-
-        <EditText
-            android:id="@+id/et_option_1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/option_1" />
-
-        <EditText
-            android:id="@+id/et_option_2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/option_2" />
-
-        <Button
-            android:id="@+id/btn_add_option"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/add_option" />
+        <!-- Add EditText views for question options here -->
 
     </LinearLayout>
 
     <EditText
-        android:id="@+id/et_answer"
+        android:id="@+id/et_question_answer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/answer"
-        android:inputType="textMultiLine"
+        android:layout_marginTop="16dp"
+        android:hint="Answer"
+        android:inputType="text"
         android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_save_question"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Save" />
+
+        <Button
+            android:id="@+id/btn_delete_question"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Delete" />
+
+    </LinearLayout>
 
 </LinearLayout>

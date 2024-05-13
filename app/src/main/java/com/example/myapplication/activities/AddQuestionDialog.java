@@ -9,10 +9,13 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
+import androidx.core.content.ContextCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import android.widget.Toast;
 
 import com.example.myapplication.R;
 import com.example.myapplication.models.Question;
@@ -25,18 +28,23 @@ public class AddQuestionDialog extends DialogFragment {
     private EditText etQuestionText;
     private Spinner spinnerQuestionType;
     private LinearLayout llQuestionOptions;
-    private EditText etAnswer;
+    private EditText etQuestionAnswer;
     private OnQuestionAddedListener listener;
 
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        View view = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_add_question, null);
+        View view = LayoutInflater.from(getActivity()).inflate(R.layout.activity_question_editor, null);
 
         etQuestionText = view.findViewById(R.id.et_question_text);
         spinnerQuestionType = view.findViewById(R.id.spinner_question_type);
         llQuestionOptions = view.findViewById(R.id.ll_question_options);
-        etAnswer = view.findViewById(R.id.et_answer);
+        etQuestionAnswer = view.findViewById(R.id.et_question_answer);
+
+        // Create a TextView to display the error message for options
+        TextView tvOptionsError = new TextView(getActivity());
+        tvOptionsError.setTextColor(ContextCompat.getColor(getActivity(), R.color.error_color)); // Set the error text color
+        llQuestionOptions.addView(tvOptionsError);
 
         spinnerQuestionType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -56,11 +64,34 @@ public class AddQuestionDialog extends DialogFragment {
                     String questionText = etQuestionText.getText().toString().trim();
                     QuestionType questionType = QuestionType.values()[spinnerQuestionType.getSelectedItemPosition()];
                     List<String> options = getQuestionOptions();
-                    String answer = etAnswer.getText().toString().trim();
+                    String answer = etQuestionAnswer.getText().toString().trim();
 
-                    Question question = new Question(questionText, questionType, options, answer);
-                    if (listener != null) {
-                        listener.onQuestionAdded(question);
+                    boolean isValid = true;
+
+                    if (questionText.isEmpty()) {
+                        etQuestionText.setError("Question text is required");
+                        isValid = false;
+                    }
+
+                    if (questionType == QuestionType.SHORT_ANSWER && answer.isEmpty()) {
+                        etQuestionAnswer.setError("Answer is required for short answer questions");
+                        isValid = false;
+                    }
+
+                    if (questionType == QuestionType.MULTIPLE_CHOICE && options.size() < 3) {
+                        tvOptionsError.setText("At least 3 options are required for multiple-choice questions");
+                        isValid = false;
+                    } else {
+                        tvOptionsError.setText(""); // Clear the error message
+                    }
+
+                    if (isValid) {
+                        Question question = new Question(questionText, questionType, options, answer);
+                        if (listener != null) {
+                            listener.onQuestionAdded(question);
+                        }
+                    } else {
+                        Toast.makeText(getActivity(), "Please fix the errors in the input", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Cancel", null);
@@ -74,11 +105,11 @@ public class AddQuestionDialog extends DialogFragment {
             case MULTIPLE_CHOICE:
             case TRUE_FALSE:
                 llQuestionOptions.setVisibility(View.VISIBLE);
-                etAnswer.setVisibility(View.GONE);
+                etQuestionAnswer.setVisibility(View.GONE);
                 break;
             case SHORT_ANSWER:
                 llQuestionOptions.setVisibility(View.GONE);
-                etAnswer.setVisibility(View.VISIBLE);
+                etQuestionAnswer.setVisibility(View.VISIBLE);
                 break;
         }
     }

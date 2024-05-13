@@ -24,4 +24,6 @@
 
     <color name="notification_badge_color">#FF0000</color>
 
+    <color name="error_color">#F44336</color>
+
 </resources>
