@@ -1,142 +1,121 @@
-I apologize for the confusion earlier. Let's go through the issues you're facing step by step:
+Okay, let's update the `QuestionAdapter` class with the `getQuestions()` and `setQuestions(List<Question> questions)` methods:
 
-1. **Creating Exam Framework**:
-   - In the `ExamManagementActivity`, you mentioned that clicking the "Create Exam Framework" button used to create an exam framework in Firestore, but it's not happening now.
-   - To fix this, we need to update the `createAndLaunchExamEditor` method in the `ExamManagementActivity` to create a new exam document in Firestore before launching the `ExamEditorActivity`.
+```java
+public class QuestionAdapter extends RecyclerView.Adapter<QuestionAdapter.QuestionViewHolder> {
+    private List<Question> questions;
+    private OnQuestionClickListener onQuestionClickListener;
+    private OnQuestionEditListener onQuestionEditListener;
+    private OnQuestionDeleteListener onQuestionDeleteListener;
 
-   ```java
-   private void createAndLaunchExamEditor(String examTitle, String examDate, int examDuration) {
-       // Create a new exam document in Firestore
-       Map<String, Object> examData = new HashMap<>();
-       examData.put("title", examTitle);
-       examData.put("date", examDate);
-       examData.put("duration", examDuration);
+    public QuestionAdapter(List<Question> questions) {
+        this.questions = questions;
+    }
 
-       FirebaseFirestore db = FirebaseFirestore.getInstance();
-       db.collection("exams")
-           .add(examData)
-           .addOnSuccessListener(documentReference -> {
-               // Exam document created successfully
-               String examId = documentReference.getId();
+    public List<Question> getQuestions() {
+        return questions;
+    }
 
-               // Pass the exam data and examId to the ExamEditorActivity
-               Intent intent = new Intent(ExamManagementActivity.this, ExamEditorActivity.class);
-               intent.putExtra("examTitle", examTitle);
-               intent.putExtra("examDate", examDate);
-               intent.putExtra("examDuration", examDuration);
-               intent.putExtra("examId", examId);
-               startActivity(intent);
-           })
-           .addOnFailureListener(e -> {
-               // Error creating exam document
-               Toast.makeText(ExamManagementActivity.this, "Failed to create exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-           });
-   }
-   ```
+    public void setQuestions(List<Question> questions) {
+        this.questions = questions;
+        notifyDataSetChanged();
+    }
 
-   This method creates a new exam document in Firestore with the provided exam data and then launches the `ExamEditorActivity` with the exam data and the newly created `examId`.
+    @NonNull
+    @Override
+    public QuestionViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_question, parent, false);
+        return new QuestionViewHolder(view);
+    }
 
-2. **Adding Questions**:
-   - In the `ExamEditorActivity`, you mentioned that clicking the "Add Question" button used to open the `QuestionEditorActivity`, but it's not happening now.
-   - To fix this, you need to set up the click listener for the "Add Question" button and launch the `QuestionEditorActivity` when clicked.
+    @Override
+    public void onBindViewHolder(@NonNull QuestionViewHolder holder, int position) {
+        Question question = questions.get(position);
+        holder.bind(question, position);
 
-   ```java
-   // Initialize the Button for adding a question
-   Button btnAddQuestion = findViewById(R.id.btn_add_question);
-   btnAddQuestion.setOnClickListener(v -> {
-       // Launch the QuestionEditorActivity
-       Intent intent = new Intent(ExamEditorActivity.this, QuestionEditorActivity.class);
-       startActivityForResult(intent, REQUEST_CODE_ADD_QUESTION);
-   });
-   ```
+        // Set the OnClickListener for the question item
+        holder.itemView.setOnClickListener(v -> {
+            if (onQuestionClickListener != null) {
+                onQuestionClickListener.onQuestionClick(question);
+            }
+        });
+    }
 
-3. **Saving Questions**:
-   - In the `ExamEditorActivity`, you mentioned that clicking the "Save" button in the `QuestionEditorActivity` doesn't save the question data to Firestore.
-   - To fix this, you need to update the `onActivityResult` method in the `ExamEditorActivity` to handle the result from the `QuestionEditorActivity` and save the new question data to Firestore.
+    @Override
+    public int getItemCount() {
+        return questions.size();
+    }
 
-   ```java
-   @Override
-   protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-       super.onActivityResult(requestCode, resultCode, data);
+    public void setOnQuestionClickListener(OnQuestionClickListener listener) {
+        this.onQuestionClickListener = listener;
+    }
 
-       if (requestCode == REQUEST_CODE_ADD_QUESTION && resultCode == RESULT_OK) {
-           if (data != null) {
-               String newQuestionJson = data.getStringExtra("newQuestion");
-               if (newQuestionJson != null) {
-                   Question newQuestion = GSON.fromJson(newQuestionJson, Question.class);
+    public void setOnQuestionEditListener(OnQuestionEditListener listener) {
+        this.onQuestionEditListener = listener;
+    }
 
-                   // Add the new question to the questions list
-                   questions.add(newQuestion);
+    public void setOnQuestionDeleteListener(OnQuestionDeleteListener listener) {
+        this.onQuestionDeleteListener = listener;
+    }
 
-                   // Notify the adapter about the new question
-                   if (questionAdapter != null) {
-                       questionAdapter.notifyItemInserted(questions.size() - 1);
-                   }
+    public interface OnQuestionClickListener {
+        void onQuestionClick(Question question);
+    }
 
-                   // Get the examId from the Intent extras
-                   String examId = getIntent().getStringExtra("examId");
+    public interface OnQuestionEditListener {
+        void onQuestionEdit(Question question);
+    }
 
-                   // Save the new question to Firestore
-                   saveQuestionToFirestore(examId, newQuestion);
-               }
-           }
-       }
-   }
+    public interface OnQuestionDeleteListener {
+        void onQuestionDeleted(Question question);
+    }
 
-   private void saveQuestionToFirestore(String examId, Question question) {
-       FirebaseFirestore db = FirebaseFirestore.getInstance();
-       db.collection("exams")
-           .document(examId)
-           .collection("questions")
-           .add(question)
-           .addOnSuccessListener(documentReference -> {
-               // Question document created successfully
-           })
-           .addOnFailureListener(e -> {
-               // Error creating question document
-               Toast.makeText(ExamEditorActivity.this, "Failed to save question: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-           });
-   }
-   ```
+    // ... (existing code for QuestionViewHolder)
+}
+```
 
-   This code handles the result from the `QuestionEditorActivity`, adds the new question to the `questions` list, notifies the adapter about the new question, and then saves the new question to Firestore as a subcollection under the exam document.
+With these changes, you should be able to resolve the `Cannot resolve method 'getQuestions' in 'QuestionAdapter'` and `Cannot resolve method 'setQuestions' in 'QuestionAdapter'` errors.
 
-4. **Saving Exam**:
-   - In the `ExamEditorActivity`, you mentioned that clicking the "Save Exam" button doesn't save the exam data and questions to Firestore.
-   - To fix this, you need to update the `onClick` listener for the "Save Exam" button to save the exam data and questions to Firestore.
+For the remaining errors related to `WriteBatch`, `DocumentReference`, and `commit()`, you need to import the necessary classes and use the correct syntax as mentioned in my previous response.
 
-   ```java
-   // Set up the "Save Exam" button click listener
-   Button btnSaveExam = findViewById(R.id.btn_save_exam);
-   btnSaveExam.setOnClickListener(v -> {
-       // Get the examId from the Intent extras
-       String examId = getIntent().getStringExtra("examId");
+Here's how you can update the `saveQuestionsToFirestore` method:
 
-       // Save the exam data and questions to Firestore
-       saveExamToFirestore(examId, questions);
-   });
+```java
+private void saveQuestionsToFirestore(String examId, List<Question> questions) {
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+    WriteBatch batch = db.batch();
 
-   private void saveExamToFirestore(String examId, List<Question> questions) {
-       FirebaseFirestore db = FirebaseFirestore.getInstance();
+    for (int i = 0; i < questions.size(); i++) {
+        Question question = questions.get(i);
+        DocumentReference questionRef = db.collection("exams").document(examId).collection("questions").document();
+        batch.set(questionRef, question.toMap());
+    }
 
-       // Save the questions as subcollections
-       for (int i = 0; i < questions.size(); i++) {
-           Question question = questions.get(i);
-           db.collection("exams")
-               .document(examId)
-               .collection("questions")
-               .add(question)
-               .addOnSuccessListener(questionDocRef -> {
-                   // Question document created successfully
-               })
-               .addOnFailureListener(e -> {
-                   // Error creating question document
-                   Toast.makeText(ExamEditorActivity.this, "Failed to save question: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-               });
-       }
-   }
-   ```
+    batch.commit()
+            .addOnSuccessListener(aVoid -> {
+                // Questions saved successfully
+                Toast.makeText(ExamEditorActivity.this, "Exam saved", Toast.LENGTH_SHORT).show();
+            })
+            .addOnFailureListener(e -> {
+                // Error saving questions
+                Log.e("ExamEditorActivity", "Error saving questions: " + e.getMessage());
+                Toast.makeText(ExamEditorActivity.this, "Failed to save questions: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+}
+```
 
-   This code gets the `examId` from the `Intent` extras and then saves all the questions in the `questions` list as subcollections under the exam document in Firestore.
+Additionally, you need to create a `toMap()` method in your `Question` class to convert the `Question` object to a `Map<String, Object>`. Here's an example implementation:
 
-By implementing these changes, you should be able to create exam frameworks, add questions, and save the exam data and questions to Firestore. If you're still facing issues, please provide more details or error messages, and I'll do my best to assist you further.
+```java
+// In the Question class
+public Map<String, Object> toMap() {
+    Map<String, Object> data = new HashMap<>();
+    data.put("text", getText());
+    data.put("type", getType().toString());
+    data.put("options", getOptions());
+    data.put("answer", getAnswer());
+    // Add any other properties of the Question class
+    return data;
+}
+```
+
+Make sure to import the necessary classes and adjust the code according to your application's structure and requirements.
