@@ -1,121 +1,52 @@
-Okay, let's update the `QuestionAdapter` class with the `getQuestions()` and `setQuestions(List<Question> questions)` methods:
+Based on the information provided, it seems that the "Invalid Exam ID" toast is being displayed when the `examId` is null or empty when launching the `ExamEditorActivity`. This could happen if the `examId` is not being passed correctly from the `ExamManagementActivity`.
 
-```java
-public class QuestionAdapter extends RecyclerView.Adapter<QuestionAdapter.QuestionViewHolder> {
-    private List<Question> questions;
-    private OnQuestionClickListener onQuestionClickListener;
-    private OnQuestionEditListener onQuestionEditListener;
-    private OnQuestionDeleteListener onQuestionDeleteListener;
+To troubleshoot this issue, you can follow these steps:
 
-    public QuestionAdapter(List<Question> questions) {
-        this.questions = questions;
-    }
+1. **Add Logging in `ExamManagementActivity`**:
+   In the `ExamManagementActivity`, add logging statements to print the value of the `examId` before launching the `ExamEditorActivity`. This will help you verify if the `examId` is being retrieved correctly.
 
-    public List<Question> getQuestions() {
-        return questions;
-    }
+   For example, in the `onExamClick` method:
 
-    public void setQuestions(List<Question> questions) {
-        this.questions = questions;
-        notifyDataSetChanged();
-    }
+   ```java
+   @Override
+   public void onExamClick(Exam exam) {
+       // Log the examId value
+       Log.d("ExamManagementActivity", "examId: " + exam.getExamId());
 
-    @NonNull
-    @Override
-    public QuestionViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_question, parent, false);
-        return new QuestionViewHolder(view);
-    }
+       // Launch the ExamEditorActivity and pass the exam data
+       Intent intent = new Intent(this, ExamEditorActivity.class);
+       intent.putExtra("examTitle", exam.getTitle());
+       intent.putExtra("examDate", exam.getDate());
+       intent.putExtra("examDuration", exam.getDuration());
+       intent.putExtra("examId", exam.getExamId());
+       startActivity(intent);
+   }
+   ```
 
-    @Override
-    public void onBindViewHolder(@NonNull QuestionViewHolder holder, int position) {
-        Question question = questions.get(position);
-        holder.bind(question, position);
+2. **Check Firestore Data**:
+   Open the Firestore console and verify that the `examId` field is correctly stored in the exam documents. If the `examId` field is missing or incorrect, it could be the reason why the "Invalid Exam ID" toast is being displayed.
 
-        // Set the OnClickListener for the question item
-        holder.itemView.setOnClickListener(v -> {
-            if (onQuestionClickListener != null) {
-                onQuestionClickListener.onQuestionClick(question);
-            }
-        });
-    }
+3. **Verify `Exam` Class**:
+   Ensure that the `Exam` class has a proper `getExamId()` method that returns the correct `examId` value. If the `examId` field is not being set correctly when creating or retrieving the `Exam` objects, the `getExamId()` method will return null or an incorrect value.
 
-    @Override
-    public int getItemCount() {
-        return questions.size();
-    }
+4. **Check `ExamEditorActivity` Code**:
+   In the `ExamEditorActivity`, double-check the code where you retrieve the `examId` from the `Intent` extras. Make sure that you're handling the case where the `examId` is null or empty correctly.
 
-    public void setOnQuestionClickListener(OnQuestionClickListener listener) {
-        this.onQuestionClickListener = listener;
-    }
+   ```java
+   String examId = getIntent().getStringExtra("examId");
+   if (examId != null && !examId.isEmpty()) {
+       // Proceed with retrieving and displaying the exam data
+   } else {
+       // Handle the case where examId is null or empty
+       Toast.makeText(ExamEditorActivity.this, "Invalid exam ID", Toast.LENGTH_SHORT).show();
+   }
+   ```
 
-    public void setOnQuestionEditListener(OnQuestionEditListener listener) {
-        this.onQuestionEditListener = listener;
-    }
+By following these steps, you should be able to identify the root cause of the "Invalid Exam ID" issue and resolve it accordingly. If you're still facing issues after trying these steps, please provide any additional logs or information that might help in further troubleshooting.
 
-    public void setOnQuestionDeleteListener(OnQuestionDeleteListener listener) {
-        this.onQuestionDeleteListener = listener;
-    }
-
-    public interface OnQuestionClickListener {
-        void onQuestionClick(Question question);
-    }
-
-    public interface OnQuestionEditListener {
-        void onQuestionEdit(Question question);
-    }
-
-    public interface OnQuestionDeleteListener {
-        void onQuestionDeleted(Question question);
-    }
-
-    // ... (existing code for QuestionViewHolder)
-}
-```
-
-With these changes, you should be able to resolve the `Cannot resolve method 'getQuestions' in 'QuestionAdapter'` and `Cannot resolve method 'setQuestions' in 'QuestionAdapter'` errors.
-
-For the remaining errors related to `WriteBatch`, `DocumentReference`, and `commit()`, you need to import the necessary classes and use the correct syntax as mentioned in my previous response.
-
-Here's how you can update the `saveQuestionsToFirestore` method:
-
-```java
-private void saveQuestionsToFirestore(String examId, List<Question> questions) {
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    WriteBatch batch = db.batch();
-
-    for (int i = 0; i < questions.size(); i++) {
-        Question question = questions.get(i);
-        DocumentReference questionRef = db.collection("exams").document(examId).collection("questions").document();
-        batch.set(questionRef, question.toMap());
-    }
-
-    batch.commit()
-            .addOnSuccessListener(aVoid -> {
-                // Questions saved successfully
-                Toast.makeText(ExamEditorActivity.this, "Exam saved", Toast.LENGTH_SHORT).show();
-            })
-            .addOnFailureListener(e -> {
-                // Error saving questions
-                Log.e("ExamEditorActivity", "Error saving questions: " + e.getMessage());
-                Toast.makeText(ExamEditorActivity.this, "Failed to save questions: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
-}
-```
-
-Additionally, you need to create a `toMap()` method in your `Question` class to convert the `Question` object to a `Map<String, Object>`. Here's an example implementation:
-
-```java
-// In the Question class
-public Map<String, Object> toMap() {
-    Map<String, Object> data = new HashMap<>();
-    data.put("text", getText());
-    data.put("type", getType().toString());
-    data.put("options", getOptions());
-    data.put("answer", getAnswer());
-    // Add any other properties of the Question class
-    return data;
-}
-```
-
-Make sure to import the necessary classes and adjust the code according to your application's structure and requirements.
+Citations:
+[1] https://stackoverflow.com/questions/61028079/firebase-cli-always-shows-error-invalid-project-id
+[2] https://stackoverflow.com/questions/52354743/cannot-resolve-firebasefirestore-android
+[3] https://stackoverflow.com/questions/67845455/could-not-reach-cloud-firestore-backend-connection-failed-1-times
+[4] https://firebase.google.com/docs/firestore/query-data/queries
+[5] https://github.com/firebase/flutterfire/issues/1979
