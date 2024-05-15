@@ -1,145 +1,57 @@
-I apologize for the confusion and the issues you're facing. It seems like there are multiple problems with the way questions are being handled in your application. Let's address them one by one:
+Sure, let's go through the steps to implement question deletion in your application.
 
-1. **Question Duplication**:
-   The issue of question duplication could be caused by the way you're updating the questions in Firestore. Instead of deleting all existing questions and then saving the new and existing questions, we should update the questions individually.
+Step 1: Update the `onQuestionDelete` method in the `ExamEditorActivity` class.
 
-   Here's how you can update the `saveQuestionsToFirestore` method to avoid question duplication:
+Open the `ExamEditorActivity` class and locate the `onQuestionDelete` method. Update it with the following code:
 
-   ```java
-   private Task<Void> saveQuestionsToFirestore(String examId, List<Question> newQuestions, List<Question> existingQuestions) {
-       WriteBatch batch = db.batch();
+```java
+public void onQuestionDelete(Question question) {
+    // Find the index of the question to be deleted
+    int index = questionManager.getQuestions().indexOf(question);
 
-       // Delete new questions from the existing list
-       for (Question newQuestion : newQuestions) {
-           existingQuestions.remove(newQuestion);
-       }
+    if (index != -1) {
+        // Delete the question from the QuestionManager
+        questionManager.deleteQuestion(index);
 
-       // Delete removed questions from Firestore
-       for (Question removedQuestion : existingQuestions) {
-           DocumentReference questionRef = db.collection("exams").document(examId).collection("questions").document(removedQuestion.getId());
-           batch.delete(questionRef);
-       }
+        // Notify the adapter about the data change
+        questionAdapter.notifyItemRemoved(index);
 
-       // Save new questions
-       for (Question newQuestion : newQuestions) {
-           DocumentReference questionRef = db.collection("exams").document(examId).collection("questions").document();
-           batch.set(questionRef, newQuestion.toMap());
-       }
+        // Delete the question from Firestore
+        FirestoreManager.getInstance().deleteQuestionFromFirestore(examManager.getExamId(), question.getId());
+    }
+}
+```
 
-       // Update existing questions
-       for (Question existingQuestion : existingQuestions) {
-           DocumentReference questionRef = db.collection("exams").document(examId).collection("questions").document(existingQuestion.getId());
-           batch.set(questionRef, existingQuestion.toMap());
-       }
+This method finds the index of the question to be deleted, removes it from the `QuestionManager`, notifies the adapter about the data change, and then calls the `deleteQuestionFromFirestore` method from the `FirestoreManager` class to delete the question document from Firestore.
 
-       return batch.commit();
-   }
-   ```
+Step 2: Add the `deleteQuestionFromFirestore` method to the `FirestoreManager` class.
 
-   In this updated method, we're doing the following:
-   - Removing the new questions from the existing questions list to avoid duplicates.
-   - Deleting the removed questions from Firestore.
-   - Saving the new questions by creating new documents.
-   - Updating the existing questions by setting their data in their respective documents.
+Open the `FirestoreManager` class and add the following method:
 
-   This approach should prevent question duplication and ensure that the questions are updated correctly in Firestore.
+```java
+public void deleteQuestionFromFirestore(String examId, String questionId) {
+    db.collection("exams")
+            .document(examId)
+            .collection("questions")
+            .document(questionId)
+            .delete();
+}
+```
 
-2. **Real-time Updates**:
-   To ensure that the changes are reflected in real-time on the front-end, you can use Firestore's real-time updates feature. Instead of fetching the questions from Firestore every time, you can listen for changes in the "questions" collection and update the UI accordingly.
+This method deletes the question document from the "questions" collection in Firestore using the provided `examId` and `questionId`.
 
-   Here's how you can implement real-time updates in your `ExamEditorActivity`:
+After making these changes, you should be able to delete questions from both the local `QuestionManager` and the Firestore database.
 
-   ```java
-   private ListenerRegistration questionsListener;
+Note: Make sure that the `QuestionManager` class has a `deleteQuestion` method that removes the question from the local list of questions. If not, you'll need to add it.
 
-   @Override
-   protected void onCreate(Bundle savedInstanceState) {
-       super.onCreate(savedInstanceState);
-       // ... (existing code)
+Here's an example implementation of the `deleteQuestion` method in the `QuestionManager` class:
 
-       // Set up real-time updates for questions
-       setupQuestionsListener(examId);
-   }
+```java
+public void deleteQuestion(int index) {
+    if (index >= 0 && index < questions.size()) {
+        questions.remove(index);
+    }
+}
+```
 
-   private void setupQuestionsListener(String examId) {
-       questionsListener = FirestoreManager.getInstance().getDb()
-               .collection("exams")
-               .document(examId)
-               .collection("questions")
-               .addSnapshotListener((value, error) -> {
-                   if (error != null) {
-                       // Handle error
-                       return;
-                   }
-
-                   List<Question> questions = new ArrayList<>();
-                   for (DocumentSnapshot document : value.getDocuments()) {
-                       Question question = document.toObject(Question.class);
-                       questions.add(question);
-                   }
-
-                   // Update the QuestionManager and the adapter
-                   questionManager.setQuestions(questions);
-                   questionAdapter.setQuestions(questions);
-               });
-   }
-
-   @Override
-   protected void onDestroy() {
-       super.onDestroy();
-       // Remove the listener when the activity is destroyed
-       if (questionsListener != null) {
-           questionsListener.remove();
-       }
-   }
-   ```
-
-   In this implementation, we're setting up a real-time listener for the "questions" collection in the `setupQuestionsListener` method. Whenever there's a change in the "questions" collection, the listener will be triggered, and we'll update the `QuestionManager` and the `QuestionAdapter` with the latest questions.
-
-   Additionally, we're removing the listener in the `onDestroy` method to prevent memory leaks.
-
-   With this approach, the UI should update in real-time as questions are added, edited, or deleted.
-
-3. **Question Deletion**:
-   To delete a question, you can update the `onQuestionDelete` method to remove the question from Firestore using its document ID. Here's how you can modify the `onQuestionDelete` method:
-
-   ```java
-   public void onQuestionDelete(Question question) {
-       // Find the index of the question to be deleted
-       int index = questionManager.getQuestions().indexOf(question);
-
-       if (index != -1) {
-           // Delete the question from the QuestionManager
-           questionManager.deleteQuestion(index);
-
-           // Notify the adapter about the data change
-           questionAdapter.notifyItemRemoved(index);
-
-           // Delete the question from Firestore
-           FirestoreManager.getInstance().deleteQuestionFromFirestore(examManager.getExamId(), question.getId());
-       }
-   }
-   ```
-
-   In this updated method, we're calling the `deleteQuestionFromFirestore` method from the `FirestoreManager` class and passing the `examId` and the `question.getId()` to delete the question document from Firestore.
-
-   You'll need to add the `deleteQuestionFromFirestore` method to the `FirestoreManager` class:
-
-   ```java
-   public void deleteQuestionFromFirestore(String examId, String questionId) {
-       db.collection("exams")
-               .document(examId)
-               .collection("questions")
-               .document(questionId)
-               .delete();
-   }
-   ```
-
-   This method deletes the question document from the "questions" collection using the provided `questionId`.
-
-By implementing these changes, you should be able to:
-- Avoid question duplication
-- Update the UI in real-time as questions are added, edited, or deleted
-- Delete questions correctly from Firestore
-
-If you still encounter issues after making these changes, please provide more details or any error messages you're receiving, and I'll be happy to assist you further.
+With these changes, you should be able to delete questions correctly from both the local data and the Firestore database.
