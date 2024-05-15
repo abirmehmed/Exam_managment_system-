@@ -1,108 +1,95 @@
-The error you're encountering, `java.lang.NullPointerException: Provided document path must not be null`, is occurring in the `deleteQuestionFromFirestore` method of your `FirestoreManager` class.
+After carefully reviewing the provided code, I can see that the issue with the `documentId` being `null` and the questions subfield not being generated in Firestore is likely due to the way the `questions` list is being passed to the `createNewExam` and `updateExistingExam` methods in the `ExamManager` class.
 
-Here's the relevant code from your `FirestoreManager` class:
+In the `ExamEditorActivity` class, when you create a new exam or update an existing exam, you're passing the `questionManager.getQuestions()` list to the `createNewExam` and `updateExistingExam` methods. However, this list may contain `Question` objects with `null` `documentId` values, which are considered deleted questions by the `saveQuestionsToFirestore` method.
+
+Here's the relevant code from the `ExamEditorActivity` class:
 
 ```java
-public void deleteQuestionFromFirestore(String examId, String questionDocumentId) {
-    db.collection("exams")
-            .document(examId)
-            .collection("questions")
-            .document(questionDocumentId)
-            .delete();
-}
+// Save the exam to Firestore
+examManager.updateExistingExam(new ExamManager.OnExamUpdatedListener() {
+    @Override
+    public void onExamUpdated() {
+        // Exam updated successfully
+        Toast.makeText(ExamEditorActivity.this, "Exam saved", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onExamUpdateFailed(Exception e) {
+        // Error updating exam
+        Toast.makeText(ExamEditorActivity.this, "Failed to save exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+    }
+});
 ```
 
-The error is likely caused by the `questionDocumentId` being `null` when you're trying to delete a question from Firestore. The `document` method in Firestore expects a non-null document ID, and passing a `null` value results in this `NullPointerException`.
-
-To resolve this issue, you need to ensure that the `questionDocumentId` is not `null` before calling the `delete` method. You can add a null check in the `deleteQuestionFromFirestore` method:
+And in the `onQuestionDeleted` method:
 
 ```java
-public void deleteQuestionFromFirestore(String examId, String questionDocumentId) {
-    if (questionDocumentId != null) {
-        db.collection("exams")
-                .document(examId)
-                .collection("questions")
-                .document(questionDocumentId)
-                .delete();
+public void onQuestionDeleted(Question question) {
+    // Find the index of the question to be deleted
+    int index = questionManager.getQuestions().indexOf(question);
+    if (index != -1) {
+        // Delete the question from the QuestionManager
+        questionManager.deleteQuestion(index);
+        // Notify the adapter about the data change
+        questionAdapter.notifyItemRemoved(index);
+        // Delete the question from Firestore
+        FirestoreManager.getInstance().deleteQuestionFromFirestore(examManager.getExamId(), question.getDocumentId());
+        // Update the exam in Firestore with the updated question list
+        List<Question> updatedQuestions = new ArrayList<>(questionManager.getQuestions());
+        FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), updatedQuestions);
     }
 }
 ```
 
-By adding this null check, you'll prevent the `NullPointerException` from occurring when the `questionDocumentId` is `null`.
+In the `onQuestionDeleted` method, when you delete a question, you're setting the `documentId` of the deleted `Question` object to `null`. However, this `Question` object with a `null` `documentId` is still present in the `questionManager.getQuestions()` list.
 
-As for the issue with the `documentId` being `null` and questions being deleted when saving the exam, it's possible that the `saveQuestionsToFirestore` method is not working as expected. Double-check the implementation of this method and ensure that the `documentId` field is being set correctly for both new and existing questions.
+When you call `FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), updatedQuestions)`, you're passing the `questionManager.getQuestions()` list, which may contain `Question` objects with `null` `documentId` values.
 
-Additionally, make sure that you're correctly handling the deletion of questions in the `saveQuestionsToFirestore` method. If you're not removing the deleted questions from the `newQuestions` and `existingQuestions` lists before saving, it could lead to unexpected behavior.
-
-Here's an example of how you could handle the deletion of questions in the `saveQuestionsToFirestore` method:
+The `saveQuestionsToFirestore` method in the `FirestoreManager` class is designed to filter out `Question` objects with `null` `documentId` values, as they are considered deleted questions. This is done in the `filterOutDeletedQuestions` method:
 
 ```java
-private Task<Void> saveQuestionsToFirestore(String examId, List<Question> newQuestions, List<Question> existingQuestions) {
-    return db.runTransaction(transaction -> {
-        WriteBatch batch = db.batch();
-        Set<String> allQuestionIds = new HashSet<>();
-
-        // Remove deleted questions from the lists
-        List<Question> updatedNewQuestions = new ArrayList<>(newQuestions);
-        List<Question> updatedExistingQuestions = new ArrayList<>(existingQuestions);
-        for (Question question : newQuestions) {
-            if (question.getDocumentId() == null) {
-                updatedNewQuestions.remove(question);
-            }
+private List<Question> filterOutDeletedQuestions(List<Question> questions) {
+    List<Question> updatedQuestions = new ArrayList<>();
+    for (Question question : questions) {
+        if (question.getDocumentId() != null) {
+            updatedQuestions.add(question);
         }
-        for (Question question : existingQuestions) {
-            if (question.getDocumentId() == null) {
-                updatedExistingQuestions.remove(question);
-            }
-        }
-
-        // Add existing question IDs to the set
-        for (Question existingQuestion : updatedExistingQuestions) {
-            allQuestionIds.add(existingQuestion.getDocumentId());
-        }
-
-        // Delete removed questions from Firestore
-        for (Question removedQuestion : updatedExistingQuestions) {
-            batch.delete(db.collection("exams").document(examId).collection("questions").document(removedQuestion.getDocumentId()));
-        }
-
-        // Save new questions and update existing questions
-        for (Question question : updatedNewQuestions) {
-            DocumentReference questionRef;
-            if (allQuestionIds.contains(question.getDocumentId())) {
-                // Update existing question
-                questionRef = db.collection("exams").document(examId).collection("questions").document(question.getDocumentId());
-            } else {
-                // Save new question
-                questionRef = db.collection("exams").document(examId).collection("questions").document();
-                batch.set(questionRef, question.toMap());
-                question.setDocumentId(questionRef.getId());
-                allQuestionIds.add(questionRef.getId());
-            }
-        }
-
-        // Update existing questions
-        for (Question existingQuestion : updatedExistingQuestions) {
-            if (!allQuestionIds.contains(existingQuestion.getDocumentId())) {
-                DocumentReference questionRef = db.collection("exams").document(examId).collection("questions").document(existingQuestion.getDocumentId());
-                batch.set(questionRef, existingQuestion.toMap());
-            }
-        }
-
-        // Commit the batch and return the resulting Task<Void>
-        return batch.commit();
-    }).continueWithTask(task -> {
-        if (task.isSuccessful()) {
-            return task.getResult();
-        } else {
-            throw task.getException();
-        }
-    });
+    }
+    return updatedQuestions;
 }
 ```
 
-In this updated implementation, we're creating new lists `updatedNewQuestions` and `updatedExistingQuestions` by copying the original `newQuestions` and `existingQuestions` lists. We then remove any questions with a `null` `documentId` from these lists, as these are the questions that should be considered deleted.
+As a result, when you call `updateExistingExam` with the `questionManager.getQuestions()` list, which may contain `Question` objects with `null` `documentId` values, the `saveQuestionsToFirestore` method filters out these questions, and they are not saved or updated in Firestore.
 
-The rest of the method remains the same, but it operates on the `updatedNewQuestions` and `updatedExistingQuestions` lists instead of the original lists.
+To resolve this issue, you should remove the `Question` objects with `null` `documentId` values from the `questionManager.getQuestions()` list before passing it to the `createNewExam` or `updateExistingExam` methods.
 
-By implementing these changes, you should be able to resolve the `NullPointerException` when deleting questions and ensure that the `documentId` field is set correctly for both new and existing questions.
+Here's an example of how you can modify the `onQuestionDeleted` method to remove the deleted `Question` object from the `questionManager.getQuestions()` list:
+
+```java
+public void onQuestionDeleted(Question question) {
+    // Find the index of the question to be deleted
+    int index = questionManager.getQuestions().indexOf(question);
+    if (index != -1) {
+        // Delete the question from the QuestionManager
+        questionManager.deleteQuestion(index);
+        // Notify the adapter about the data change
+        questionAdapter.notifyItemRemoved(index);
+        // Delete the question from Firestore
+        FirestoreManager.getInstance().deleteQuestionFromFirestore(examManager.getExamId(), question.getDocumentId());
+        // Remove the deleted question from the questionManager.getQuestions() list
+        questionManager.getQuestions().remove(question);
+        // Update the exam in Firestore with the updated question list
+        FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), questionManager.getQuestions());
+    }
+}
+```
+
+By removing the deleted `Question` object from the `questionManager.getQuestions()` list, you ensure that the list passed to the `updateExistingExam` method does not contain any `Question` objects with `null` `documentId` values.
+
+Additionally, you should ensure that the `questions` list passed to the `createNewExam` method does not contain any `Question` objects with `null` `documentId` values.
+
+After making these changes, the `saveQuestionsToFirestore` method should be able to correctly handle the creation and update of questions in Firestore, and the `documentId` field should be set correctly for new and existing questions.
+
+Citations:
+[1] https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/6629021/45e27353-64ad-4dc4-81a4-5ead2e2874a5/paste.txt
+[2] https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/6629021/0cc0affd-38f1-464f-b08c-2a89829390ed/paste-2.txt
