@@ -1,118 +1,256 @@
-Sure, let's integrate Firebase Firestore into your project and save the exam data, including the exam details, questions, options, and answers.
+You're right, the `ExamEditorActivity` class has become quite large and complex, making it harder to maintain and understand. Separating the code into smaller, more focused classes can improve code organization, readability, and maintainability. Here's how we can refactor the code:
 
-Here are the steps you need to follow:
+1. **Create a separate class for Firestore operations**:
+   We can create a new class called `FirestoreManager` (or a similar name) that encapsulates all the Firestore operations related to exams and questions. This class can have methods like `createNewExam`, `updateExistingExam`, `saveQuestionsToFirestore`, `retrieveExamQuestions`, etc.
 
-1. **Set up Firebase in your Android project**
-   - If you haven't already, follow the official Firebase documentation to add Firebase to your Android project: https://firebase.google.com/docs/android/setup
-   - Enable the Firestore database in the Firebase console.
+2. **Create a separate class for handling exam data**:
+   We can create a new class called `ExamManager` (or a similar name) that handles the exam data and related operations. This class can have methods for creating, updating, and managing exam objects, as well as handling the `examId` and other exam-related data.
 
-2. **Add Firebase Firestore dependency**
-   - In your app-level `build.gradle` file, add the following dependency:
-     ```
-     implementation 'com.google.firebase:firebase-firestore:24.6.0'
-     ```
+3. **Create a separate class for handling question data**:
+   We can create a new class called `QuestionManager` (or a similar name) that handles the question data and related operations. This class can have methods for creating, updating, and managing question objects, as well as handling the question order and other question-related data.
 
-3. **Create a data model for the exam**
-   - Create a new Java class called `Exam` to represent the exam data. This class should have fields for the exam name, date, duration, and a list of questions.
-   - Create another Java class called `Question` to represent the question data. This class should have fields for the question text, question type, options (for multiple-choice questions), and the answer.
+4. **Refactor the `ExamEditorActivity` class**:
+   After creating the separate classes, we can refactor the `ExamEditorActivity` class to use these new classes for their respective responsibilities. The `ExamEditorActivity` class should focus on UI-related tasks, such as setting up the RecyclerView, handling user interactions, and launching other activities.
 
-4. **Save the exam data to Firestore**
-   - In your `ExamEditorActivity`, create a method to save the exam data to Firestore. This method should be called when the "Save Exam" button is clicked.
-   - Use the `FirebaseFirestore` instance to create a new document in the "exams" collection with the exam data.
-   - For each question in the exam, create a subcollection called "questions" under the exam document and add the question data as a new document in that subcollection.
+Here's a high-level overview of how the refactored code might look:
 
-Here's an example implementation of the `saveExamToFirestore` method:
-
+**FirestoreManager.java**
 ```java
-private void saveExamToFirestore() {
-    // Get the exam data from the UI
-    String examName = etExamName.getText().toString().trim();
-    String examDate = etExamDate.getText().toString().trim();
-    String examDuration = etExamDuration.getText().toString().trim();
+public class FirestoreManager {
+    private static final FirestoreManager instance = new FirestoreManager();
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    // Create a new Exam object
-    Exam exam = new Exam(examName, examDate, examDuration, questions);
+    public static FirestoreManager getInstance() {
+        return instance;
+    }
 
-    // Save the exam data to Firestore
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    db.collection("exams")
-        .add(exam)
-        .addOnSuccessListener(documentReference -> {
-            // Exam document created successfully
-            String examId = documentReference.getId();
+    public void createNewExam(String examTitle, String examDate, int examDuration, List<Question> questions, OnExamCreatedListener listener) {
+        // Implementation for creating a new exam in Firestore
+    }
 
-            // Save the questions as subcollections
-            for (int i = 0; i < questions.size(); i++) {
-                Question question = questions.get(i);
-                db.collection("exams")
-                    .document(examId)
-                    .collection("questions")
-                    .add(question)
-                    .addOnSuccessListener(questionDocRef -> {
-                        // Question document created successfully
-                    })
-                    .addOnFailureListener(e -> {
-                        // Error creating question document
-                    });
-            }
-        })
-        .addOnFailureListener(e -> {
-            // Error creating exam document
-        });
+    public void updateExistingExam(String examId, String examTitle, String examDate, int examDuration, List<Question> questions, OnExamUpdatedListener listener) {
+        // Implementation for updating an existing exam in Firestore
+    }
+
+    public void saveQuestionsToFirestore(String examId, List<Question> newQuestions, List<Question> existingQuestions, OnQuestionsSavedListener listener) {
+        // Implementation for saving questions to Firestore
+    }
+
+    public void retrieveExamQuestions(String examId, OnQuestionsRetrievedListener listener) {
+        // Implementation for retrieving exam questions from Firestore
+    }
+
+    // Other Firestore-related methods
 }
 ```
 
-In this example, the `saveExamToFirestore` method retrieves the exam data from the UI, creates an `Exam` object, and then saves the exam data to the "exams" collection in Firestore. For each question in the exam, it creates a subcollection called "questions" under the exam document and adds the question data as a new document in that subcollection.
-
-5. **Retrieve the exam data from Firestore**
-   - In your `ExamEditorActivity`, create a method to retrieve the exam data from Firestore. This method should be called when the activity is created or when the user navigates to this activity.
-   - Use the `FirebaseFirestore` instance to retrieve the exam documents from the "exams" collection.
-   - For each exam document, retrieve the exam details and the questions from the "questions" subcollection.
-   - Populate the UI with the retrieved exam data.
-
-Here's an example implementation of the `retrieveExamsFromFirestore` method:
-
+**ExamManager.java**
 ```java
-private void retrieveExamsFromFirestore() {
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    db.collection("exams")
-        .get()
-        .addOnSuccessListener(queryDocumentSnapshots -> {
-            for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
-                Exam exam = documentSnapshot.toObject(Exam.class);
-                String examId = documentSnapshot.getId();
+public class ExamManager {
+    private String examId;
+    private String examTitle;
+    private String examDate;
+    private int examDuration;
+    private List<Question> questions;
 
-                // Retrieve the questions for this exam
-                db.collection("exams")
-                    .document(examId)
-                    .collection("questions")
-                    .get()
-                    .addOnSuccessListener(questionSnapshots -> {
-                        List<Question> questions = new ArrayList<>();
-                        for (QueryDocumentSnapshot questionSnapshot : questionSnapshots) {
-                            Question question = questionSnapshot.toObject(Question.class);
-                            questions.add(question);
-                        }
-                        exam.setQuestions(questions);
+    public ExamManager(String examId, String examTitle, String examDate, int examDuration, List<Question> questions) {
+        this.examId = examId;
+        this.examTitle = examTitle;
+        this.examDate = examDate;
+        this.examDuration = examDuration;
+        this.questions = questions;
+    }
 
-                        // Add the exam to the list or update the UI
-                        // ...
-                    })
-                    .addOnFailureListener(e -> {
-                        // Error retrieving questions
-                    });
-            }
-        })
-        .addOnFailureListener(e -> {
-            // Error retrieving exams
-        });
+    // Getters and setters for exam data
+
+    public void createNewExam(OnExamCreatedListener listener) {
+        // Call the FirestoreManager to create a new exam
+    }
+
+    public void updateExistingExam(OnExamUpdatedListener listener) {
+        // Call the FirestoreManager to update an existing exam
+    }
+
+    // Other exam-related methods
 }
 ```
 
-In this example, the `retrieveExamsFromFirestore` method retrieves the exam documents from the "exams" collection in Firestore. For each exam document, it retrieves the exam details and then retrieves the questions from the "questions" subcollection. It creates a list of `Question` objects and sets them in the `Exam` object. You can then add the `Exam` object to a list or update the UI accordingly.
+**QuestionManager.java**
+```java
+public class QuestionManager {
+    private List<Question> questions;
 
-Note: Make sure to create the `Exam` and `Question` data model classes with the appropriate fields and constructors to match the data structure in Firestore.
+    public QuestionManager(List<Question> questions) {
+        this.questions = questions;
+    }
 
-By following these steps, you should be able to save the exam data, including the exam details, questions, options, and answers, to Firestore when the "Save Exam" button is clicked. Additionally, you should be able to retrieve the exam data from Firestore and populate the UI when the `ExamEditorActivity` is created or navigated to.
+    public List<Question> getQuestions() {
+        return questions;
+    }
 
-Remember to handle any necessary error cases and provide appropriate feedback to the user. Also, make sure to follow the Firebase security rules and best practices to ensure the security and integrity of your data.
+    public void rearrangeQuestions(int fromPosition, int toPosition) {
+        // Implementation for rearranging the question order
+    }
+
+    public void updateQuestionOrderInFirestore(String examTitle, OnQuestionOrderUpdatedListener listener) {
+        // Implementation for updating the question order in Firestore
+    }
+
+    // Other question-related methods
+}
+```
+
+**ExamEditorActivity.java**
+```java
+public class ExamEditorActivity extends AppCompatActivity implements QuestionAdapter.OnQuestionClickListener, QuestionAdapter.OnQuestionEditListener, QuestionAdapter.OnQuestionDeleteListener {
+    private RecyclerView questionRecyclerView;
+    private QuestionAdapter questionAdapter;
+    private QuestionManager questionManager;
+    private ExamManager examManager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_exam_editor);
+
+        // Retrieve the exam data from the Intent extras
+        String examTitle = getIntent().getStringExtra("examTitle");
+        String examDate = getIntent().getStringExtra("examDate");
+        int examDuration = getIntent().getIntExtra("examDuration", 0);
+        String examId = getIntent().getStringExtra("examId");
+
+        // Initialize the ExamManager and QuestionManager
+        examManager = new ExamManager(examId, examTitle, examDate, examDuration, new ArrayList<>());
+        questionManager = new QuestionManager(new ArrayList<>());
+
+        // Set up the RecyclerView and adapter
+        setupRecyclerView();
+
+        // Set up the question adapter listeners
+        questionAdapter.setOnQuestionClickListener(this);
+        questionAdapter.setOnQuestionEditListener(this);
+        questionAdapter.setOnQuestionDeleteListener(this);
+
+        // Set up the "Add Question" button
+        setupAddQuestionButton();
+
+        // Set up the "Save Exam" button
+        setupSaveExamButton();
+
+        // Set up the floating action button for adding a question
+        setupFloatingActionButton();
+
+        // Set up the ItemTouchHelper for drag-and-drop functionality
+        setupItemTouchHelper();
+
+        // Retrieve the exam questions from Firestore
+        retrieveExamQuestions(examId);
+    }
+
+    private void setupRecyclerView() {
+        questionRecyclerView = findViewById(R.id.rv_questions);
+        questionRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        questionAdapter = new QuestionAdapter(questionManager.getQuestions());
+        questionRecyclerView.setAdapter(questionAdapter);
+    }
+
+    private void setupAddQuestionButton() {
+        Button btnAddQuestion = findViewById(R.id.btn_add_question);
+        btnAddQuestion.setOnClickListener(v -> {
+            // Launch the QuestionEditorActivity
+            Intent intent = new Intent(ExamEditorActivity.this, QuestionEditorActivity.class);
+            startActivityForResult(intent, REQUEST_CODE_ADD_QUESTION);
+        });
+    }
+
+    private void setupSaveExamButton() {
+        Button btnSaveExam = findViewById(R.id.btn_save_exam);
+        btnSaveExam.setOnClickListener(v -> {
+            // Save the exam to Firestore
+            examManager.updateExistingExam(new OnExamUpdatedListener() {
+                @Override
+                public void onExamUpdated() {
+                    // Exam updated successfully
+                    Toast.makeText(ExamEditorActivity.this, "Exam saved", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onExamUpdateFailed(Exception e) {
+                    // Error updating exam
+                    Toast.makeText(ExamEditorActivity.this, "Failed to save exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+    }
+
+    private void setupFloatingActionButton() {
+        fabAddQuestion = findViewById(R.id.fab_add_question);
+        fabAddQuestion.setOnClickListener(v -> {
+            // Launch the QuestionEditorActivity
+            Intent intent = new Intent(ExamEditorActivity.this, QuestionEditorActivity.class);
+            startActivityForResult(intent, REQUEST_CODE_ADD_QUESTION);
+        });
+    }
+
+    private void setupItemTouchHelper() {
+        itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                int fromPosition = viewHolder.getAdapterPosition();
+                int toPosition = target.getAdapterPosition();
+
+                // Rearrange the questions in the list
+                questionManager.rearrangeQuestions(fromPosition, toPosition);
+
+                // Notify the adapter about the change
+                questionAdapter.notifyItemMoved(fromPosition, toPosition);
+
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                // Not needed for drag-and-drop functionality
+            }
+        });
+
+        // Attach the ItemTouchHelper to the RecyclerView
+        itemTouchHelper.attachToRecyclerView(questionRecyclerView);
+    }
+
+    private void retrieveExamQuestions(String examId) {
+        FirestoreManager.getInstance().retrieveExamQuestions(examId, new OnQuestionsRetrievedListener() {
+            @Override
+            public void onQuestionsRetrieved(List<Question> questions) {
+                // Update the QuestionManager with the retrieved questions
+                questionManager.setQuestions(questions);
+
+                // Update the adapter with the retrieved questions
+                questionAdapter.setQuestions(questions);
+            }
+
+            @Override
+            public void onQuestionsRetrievalFailed(Exception e) {
+                // Error retrieving exam questions
+                Toast.makeText(ExamEditorActivity.this, "Failed to retrieve exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // Other activity lifecycle methods and event handlers
+}
+```
+
+In this refactored code, the responsibilities are separated into different classes:
+
+- `FirestoreManager` handles all Firestore operations related to exams and questions.
+- `ExamManager` handles the exam data and related operations.
+- `QuestionManager` handles the question data and related operations.
+- `ExamEditorActivity` focuses on UI-related tasks, such as setting up the RecyclerView, handling user interactions, and launching other activities.
+
+By separating the code into smaller, more focused classes, the codebase becomes more organized, easier to understand, and easier to maintain. Each class has a clear responsibility, and the code is more modular, making it easier to add new features or modify existing ones.
+
+Note that this is a high-level refactoring, and you may need to implement the actual methods and logic in each class based on your requirements. Additionally, you may need to create interfaces or callback listeners to communicate between the classes and handle asynchronous operations.
+
+Citations:
+[1] https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/6629021/0b152fc5-4710-415a-b372-a0f10ac68496/paste.txt
