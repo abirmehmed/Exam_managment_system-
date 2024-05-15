@@ -1,69 +1,56 @@
-Sure, let's break it down into a step-by-step algorithmic approach. Here's what you need to do:
+Based on the data you provided from the Firebase database, it seems that the issue is with the way the questions are being retrieved and displayed on the front-end.
 
-**Step 1: Update the `onActivityResult` method in the `ExamEditorActivity` class**
-
-After updating the exam in Firestore with the new or updated question, refresh the `RecyclerView` by calling `questionRecyclerView.setAdapter(questionAdapter)` or `questionAdapter.notifyDataSetChanged()`.
+In the `FirestoreManager` class, the `retrieveExamQuestions` method is responsible for retrieving the questions from Firestore and creating `Question` objects. Here's the code for that method:
 
 ```java
-@Override
-protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-
-    if (requestCode == REQUEST_CODE_ADD_QUESTION && resultCode == RESULT_OK) {
-        // ... (existing code for adding a new question)
-
-        // Update the exam in Firestore with the new question
-        List<Question> updatedQuestions = new ArrayList<>(questionManager.getQuestions());
-        FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), updatedQuestions);
-
-        // Refresh the RecyclerView
-        questionRecyclerView.setAdapter(questionAdapter);
-        // OR
-        // questionAdapter.notifyDataSetChanged();
-    } else if (requestCode == REQUEST_CODE_EDIT_QUESTION && resultCode == RESULT_OK) {
-        // ... (existing code for editing a question)
-
-        // Update the exam in Firestore with the updated question
-        List<Question> updatedQuestions = new ArrayList<>(questionManager.getQuestions());
-        FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), updatedQuestions);
-
-        // Refresh the RecyclerView
-        questionRecyclerView.setAdapter(questionAdapter);
-        // OR
-        // questionAdapter.notifyDataSetChanged();
-    }
+public Task<List<Question>> retrieveExamQuestions(String examId) {
+    return db.collection("exams")
+            .document(examId)
+            .collection("questions")
+            .get()
+            .continueWith(task -> {
+                List<Question> questions = new ArrayList<>();
+                for (DocumentSnapshot document : task.getResult().getDocuments()) {
+                    String text = document.getString("text");
+                    QuestionType type = QuestionType.valueOf(document.getString("type"));
+                    List<String> options = (List<String>) document.get("options");
+                    String answer = document.getString("answer");
+                    Question question = new Question(text, type, options, answer);
+                    questions.add(question);
+                }
+                return questions;
+            });
 }
 ```
 
-**Step 2: Update the `onQuestionDelete` method in the `ExamEditorActivity` class**
+The issue might be occurring due to the way the questions are being stored in the Firestore database. Based on the data you provided, it seems that the questions are stored as separate documents within the "questions" collection, and each document contains the question data.
 
-After deleting the question from Firestore, update the exam in Firestore with the updated question list, and then refresh the `RecyclerView`.
+To fix this issue, you need to modify the `retrieveExamQuestions` method to handle the case where multiple questions are stored as separate documents. Here's how you can update the method:
 
 ```java
-public void onQuestionDelete(Question question) {
-    // Find the index of the question to be deleted
-    int index = questionManager.getQuestions().indexOf(question);
-
-    if (index != -1) {
-        // Delete the question from the QuestionManager
-        questionManager.deleteQuestion(index);
-
-        // Notify the adapter about the data change
-        questionAdapter.notifyItemRemoved(index);
-
-        // Delete the question from Firestore
-        FirestoreManager.getInstance().deleteQuestionFromFirestore(examManager.getExamId(), question);
-
-        // Update the exam in Firestore with the updated question list
-        List<Question> updatedQuestions = new ArrayList<>(questionManager.getQuestions());
-        FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), updatedQuestions);
-
-        // Refresh the RecyclerView
-        questionRecyclerView.setAdapter(questionAdapter);
-        // OR
-        // questionAdapter.notifyDataSetChanged();
-    }
+public Task<List<Question>> retrieveExamQuestions(String examId) {
+    return db.collection("exams")
+            .document(examId)
+            .collection("questions")
+            .get()
+            .continueWith(task -> {
+                List<Question> questions = new ArrayList<>();
+                for (DocumentSnapshot document : task.getResult().getDocuments()) {
+                    Map<String, Object> questionData = document.getData();
+                    String text = (String) questionData.get("text");
+                    QuestionType type = QuestionType.valueOf((String) questionData.get("type"));
+                    List<String> options = (List<String>) questionData.get("options");
+                    String answer = (String) questionData.get("answer");
+                    Question question = new Question(text, type, options, answer);
+                    questions.add(question);
+                }
+                return questions;
+            });
 }
 ```
 
-By following these steps, you'll ensure that the changes made to the questions are reflected immediately on the front-end after updating the data in Firestore.
+In this updated code, we're using `document.getData()` to retrieve the question data as a `Map<String, Object>`. Then, we're accessing the individual fields of the question data using the appropriate keys (`"text"`, `"type"`, `"options"`, and `"answer"`).
+
+By making this change, the `retrieveExamQuestions` method should be able to handle the case where multiple questions are stored as separate documents in the "questions" collection, and it should retrieve all the questions correctly.
+
+After updating the `retrieveExamQuestions` method, the questions should be displayed correctly on the front-end without any duplicates.
