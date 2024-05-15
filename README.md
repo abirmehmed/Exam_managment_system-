@@ -1,19 +1,12 @@
-Based on the data you provided, it seems that the issue is related to how the question IDs are being generated and handled in your application.
+Sure, let's go through the steps to update your code and handle question IDs correctly.
 
-In the data you shared, you can see that there are multiple questions with the same ID, such as `"ba4b9463-2ef2-4e00-bb06-27c8182803c3"`. This is likely causing the duplication of questions in your Firestore database.
+Step 1: Update the `Question` class
 
-Regarding the question IDs, it appears that you are generating random UUIDs (Universally Unique Identifiers) for each new question. This is a common practice to ensure that each question has a unique identifier, but it can lead to issues if the IDs are not properly managed.
+Open the `Question` class and remove the `id` field, as the question ID will be the document ID in Firestore.
 
-To address this issue, you should consider the following changes:
+Step 2: Update the `saveQuestionsToFirestore` method in the `FirestoreManager` class
 
-1. **Generate question IDs in the server-side (Firestore)**:
-   Instead of generating random UUIDs for question IDs in your application, you should let Firestore generate the document IDs automatically when you create new questions. This way, you can ensure that each question has a unique ID, and you don't have to worry about managing the IDs yourself.
-
-2. **Update the `Question` class**:
-   Remove the `id` field from the `Question` class, as the question ID will be the document ID in Firestore.
-
-3. **Update the `saveQuestionsToFirestore` method**:
-   In the `saveQuestionsToFirestore` method of the `FirestoreManager` class, instead of creating new documents with random IDs, you should let Firestore generate the document IDs automatically. Here's how you can update the method:
+Open the `FirestoreManager` class and locate the `saveQuestionsToFirestore` method. Update it with the following code:
 
 ```java
 private Task<Void> saveQuestionsToFirestore(String examId, List<Question> newQuestions, List<Question> existingQuestions) {
@@ -26,7 +19,7 @@ private Task<Void> saveQuestionsToFirestore(String examId, List<Question> newQue
 
     // Delete removed questions from Firestore
     for (Question removedQuestion : existingQuestions) {
-        batch.delete(db.collection("exams").document(examId).collection("questions").document(removedQuestion.getId()));
+        batch.delete(db.collection("exams").document(examId).collection("questions").document(removedQuestion.getDocumentId()));
     }
 
     // Save new questions
@@ -37,7 +30,7 @@ private Task<Void> saveQuestionsToFirestore(String examId, List<Question> newQue
 
     // Update existing questions
     for (Question existingQuestion : existingQuestions) {
-        DocumentReference questionRef = db.collection("exams").document(examId).collection("questions").document(existingQuestion.getId());
+        DocumentReference questionRef = db.collection("exams").document(examId).collection("questions").document(existingQuestion.getDocumentId());
         batch.set(questionRef, existingQuestion.toMap());
     }
 
@@ -47,8 +40,9 @@ private Task<Void> saveQuestionsToFirestore(String examId, List<Question> newQue
 
 In this updated method, we're letting Firestore generate the document IDs automatically when saving new questions by using `db.collection("exams").document(examId).collection("questions").document()`.
 
-4. **Update the `deleteQuestionFromFirestore` method**:
-   Since the question IDs will now be the document IDs in Firestore, you need to update the `deleteQuestionFromFirestore` method to use the document ID instead of the `questionId`. Here's the updated method:
+Step 3: Update the `deleteQuestionFromFirestore` method in the `FirestoreManager` class
+
+Locate the `deleteQuestionFromFirestore` method in the `FirestoreManager` class and update it with the following code:
 
 ```java
 public void deleteQuestionFromFirestore(String examId, String questionDocumentId) {
@@ -60,8 +54,11 @@ public void deleteQuestionFromFirestore(String examId, String questionDocumentId
 }
 ```
 
-5. **Update the `onQuestionDeleted` method**:
-   In the `onQuestionDeleted` method of the `ExamEditorActivity` class, you need to update the call to `deleteQuestionFromFirestore` to pass the document ID of the question instead of the `questionId`. Here's the updated method:
+In this updated method, we're using the document ID of the question to delete it from Firestore.
+
+Step 4: Update the `onQuestionDeleted` method in the `ExamEditorActivity` class
+
+Open the `ExamEditorActivity` class and locate the `onQuestionDeleted` method. Update it with the following code:
 
 ```java
 public void onQuestionDeleted(Question question) {
@@ -87,6 +84,21 @@ public void onQuestionDeleted(Question question) {
 
 In this updated method, we're passing `question.getDocumentId()` to the `deleteQuestionFromFirestore` method, assuming that the `Question` class has a `getDocumentId()` method that returns the document ID of the question in Firestore.
 
-By making these changes, you should be able to avoid question duplication and handle question IDs correctly in your application. Firestore will generate unique document IDs for each new question, and you won't have to worry about managing the IDs yourself.
+Step 5: Add the `getDocumentId` method to the `Question` class (if not already present)
+
+Open the `Question` class and add the following method:
+
+```java
+public String getDocumentId() {
+    // Return the document ID of the question in Firestore
+    // If you're storing the document ID as a field, return that field
+    // Otherwise, you can return null or throw an exception
+    return null;
+}
+```
+
+This method should return the document ID of the question in Firestore. If you're storing the document ID as a field in the `Question` class, you can return that field. Otherwise, you can return `null` or throw an exception, depending on your implementation.
+
+After making these changes, your application should handle question IDs correctly, and you should no longer encounter issues with question duplication. Firestore will generate unique document IDs for each new question, and you won't have to worry about managing the IDs yourself.
 
 Note: If you have existing questions in your Firestore database with the old ID format (UUIDs), you may need to migrate the data to use the new document IDs generated by Firestore.
