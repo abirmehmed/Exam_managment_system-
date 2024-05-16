@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import com.example.myapplication.models.Exam;
 import com.example.myapplication.models.Question;
@@ -26,28 +27,41 @@ public class FirestoreManager {
         return instance;
     }
 
-    public Task<Void> createNewExam(String examTitle, String examDate, int examDuration, List<Question> questions) {
+    public void createNewExam(String examTitle, String examDate, int examDuration, List<Question> questions, OnQuestionsSavedListener listener) {
         Exam exam = new Exam(examTitle, examDate, examDuration);
-        exam.setQuestions(questions);
-        return db.collection("exams")
+        db.collection("exams")
                 .add(exam)
-                .continueWithTask(task -> {
-                    DocumentReference examRef = task.getResult();
+                .addOnSuccessListener(examRef -> {
                     String examId = examRef.getId();
-                    return saveQuestionsToFirestore(examId, questions, new ArrayList<>());
+                    saveQuestionsToFirestore(examId, questions, listener);
+                })
+                .addOnFailureListener(e -> {
+                    listener.onSaveFailed(e);
                 });
     }
 
-    public Task<Void> updateExistingExam(String examId, String examTitle, String examDate, int examDuration, List<Question> questions) {
-        Exam exam = new Exam(examId, examTitle, examDate, examDuration, questions);
-        return db.collection("exams")
+    public void updateExistingExam(String examId, String examTitle, String examDate, int examDuration, List<Question> questions, OnQuestionsSavedListener listener) {
+        Exam exam = new Exam(examId, examTitle, examDate, examDuration);
+        db.collection("exams")
                 .document(examId)
                 .set(exam)
-                .continueWithTask(task -> retrieveExistingQuestions(examId))
-                .continueWithTask(task -> saveQuestionsToFirestore(examId, questions, task.getResult()));
+                .continueWithTask(task -> {
+                    return db.collection("exams").document(examId).collection("questions").get()
+                            .continueWithTask(questionTask -> {
+                                WriteBatch batch = db.batch();
+                                for (DocumentSnapshot document : questionTask.getResult().getDocuments()) {
+                                    batch.delete(document.getReference());
+                                }
+                                return batch.commit();
+                            });
+                })
+                .addOnSuccessListener(aVoid -> {
+                    saveQuestionsToFirestore(examId, questions, listener);
+                })
+                .addOnFailureListener(e -> {
+                    listener.onSaveFailed(e);
+                });
     }
-
-
     private Task<List<Question>> retrieveExistingQuestions(String examId) {
         return db.collection("exams")
                 .document(examId)
@@ -56,13 +70,8 @@ public class FirestoreManager {
                 .continueWith(task -> {
                     List<Question> existingQuestions = new ArrayList<>();
                     for (DocumentSnapshot document : task.getResult().getDocuments()) {
-                        Map<String, Object> questionData = document.getData();
-                        String text = (String) questionData.get("text");
-                        QuestionType type = QuestionType.valueOf((String) questionData.get("type"));
-                        List<String> options = (List<String>) questionData.get("options");
-                        String answer = (String) questionData.get("answer");
-                        Question question = new Question(text, type, options, answer);
-                        question.setDocumentId(document.getId()); // Set the document ID
+                        Question question = document.toObject(Question.class);
+                        question.setDocumentId(document.getId());
                         existingQuestions.add(question);
                     }
                     return existingQuestions;
@@ -70,40 +79,21 @@ public class FirestoreManager {
     }
 
 
-    private Task<Void> saveQuestionsToFirestore(String examId, List<Question> newQuestions, List<Question> existingQuestions) {
-        return db.runTransaction(transaction -> {
+    private void saveQuestionsToFirestore(String examId, List<Question> newQuestions, OnQuestionsSavedListener listener) {
+        db.runTransaction(transaction -> {
             WriteBatch batch = db.batch();
-            Set<String> allQuestionIds = new HashSet<>();
-
-            // Remove deleted questions from the newQuestions list
-            List<Question> updatedNewQuestions = new ArrayList<>();
             for (Question question : newQuestions) {
-                if (question.getDocumentId() != null) {
-                    updatedNewQuestions.add(question);
-                }
+                DocumentReference questionRef = db.collection("exams").document(examId).collection("questions").document();
+                question.setDocumentId(questionRef.getId());
+                batch.set(questionRef, question);
             }
-
-            List<Question> updatedExistingQuestions = filterOutDeletedQuestions(existingQuestions);
-
-            allQuestionIds.addAll(getExistingQuestionIds(updatedExistingQuestions));
-
-            deleteRemovedQuestions(batch, examId, updatedExistingQuestions, allQuestionIds);
-
-            saveNewQuestions(batch, examId, updatedNewQuestions, allQuestionIds);
-
-            updateExistingQuestions(batch, examId, updatedExistingQuestions, allQuestionIds);
-
             return batch.commit();
-        }).continueWithTask(task -> {
-            if (task.isSuccessful()) {
-                return task.getResult();
-            } else {
-                throw task.getException();
-            }
+        }).addOnSuccessListener(aVoid -> {
+            listener.onQuestionsSaved();
+        }).addOnFailureListener(e -> {
+            listener.onSaveFailed(e);
         });
     }
-
-
     private List<Question> filterOutDeletedQuestions(List<Question> questions) {
         List<Question> updatedQuestions = new ArrayList<>();
         for (Question question : questions) {
@@ -187,7 +177,10 @@ public class FirestoreManager {
         }
     }
 
-
+    public interface OnQuestionsSavedListener {
+        void onQuestionsSaved();
+        void onSaveFailed(Exception e);
+    }
     public interface OnQuestionsRetrievedListener {
         void onQuestionsRetrieved(List<Question> questions);
         void onQuestionsRetrievalFailed(Exception e);

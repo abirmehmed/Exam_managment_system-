@@ -50,9 +50,28 @@ public class QuestionManager {
     }
 
     public void updateQuestionOrderInFirestore(String examId, String examTitle, String examDate, int examDuration, OnQuestionOrderUpdatedListener listener) {
-        FirestoreManager.getInstance().updateExistingExam(examId, examTitle, examDate, examDuration, questions)
-                .addOnSuccessListener(aVoid -> listener.onQuestionOrderUpdated())
-                .addOnFailureListener(e -> listener.onQuestionOrderUpdateFailed(e));
+        FirestoreManager.getInstance().updateExistingExam(
+                examId,
+                examTitle,
+                examDate,
+                examDuration,
+                questions,
+                new FirestoreManager.OnQuestionsSavedListener() {
+                    @Override
+                    public void onQuestionsSaved() {
+                        if (listener != null) {
+                            listener.onQuestionOrderUpdated();
+                        }
+                    }
+
+                    @Override
+                    public void onSaveFailed(Exception e) {
+                        if (listener != null) {
+                            listener.onQuestionOrderUpdateFailed(e);
+                        }
+                    }
+                }
+        );
     }
 
     public interface OnQuestionOrderUpdatedListener {

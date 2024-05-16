@@ -48,33 +48,42 @@ public class ExamManager {
         return new Exam(examId, examTitle, examDate, examDuration, questions);
     }
 
-    public void createNewExam(OnExamCreatedListener listener) {
-        FirestoreManager.getInstance().createNewExam(examTitle, examDate, examDuration, questions)
-                .addOnSuccessListener(aVoid -> {
-                    if (listener != null) {
-                        listener.onExamCreated();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    if (listener != null) {
-                        listener.onExamCreationFailed(e);
-                    }
-                });
+    public void createNewExam(String examTitle, String examDate, int examDuration, List<Question> questions, OnExamCreatedListener listener) {
+        FirestoreManager.getInstance().createNewExam(examTitle, examDate, examDuration, questions, new FirestoreManager.OnQuestionsSavedListener() {
+            @Override
+            public void onQuestionsSaved() {
+                if (listener != null) {
+                    listener.onExamCreated();
+                }
+            }
+
+            @Override
+            public void onSaveFailed(Exception e) {
+                if (listener != null) {
+                    listener.onExamCreationFailed(e);
+                }
+            }
+        });
     }
 
-    public void updateExistingExam(OnExamUpdatedListener listener) {
-        FirestoreManager.getInstance().updateExistingExam(examId, examTitle, examDate, examDuration, questions)
-                .addOnSuccessListener(aVoid -> {
-                    if (listener != null) {
-                        listener.onExamUpdated();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    if (listener != null) {
-                        listener.onExamUpdateFailed(e);
-                    }
-                });
+    public void updateExistingExam(String examId, String examTitle, String examDate, int examDuration, List<Question> questions, OnExamUpdatedListener listener) {
+        FirestoreManager.getInstance().updateExistingExam(examId, examTitle, examDate, examDuration, questions, new FirestoreManager.OnQuestionsSavedListener() {
+            @Override
+            public void onQuestionsSaved() {
+                if (listener != null) {
+                    listener.onExamUpdated();
+                }
+            }
+
+            @Override
+            public void onSaveFailed(Exception e) {
+                if (listener != null) {
+                    listener.onExamUpdateFailed(e);
+                }
+            }
+        });
     }
+
 
     public interface OnExamCreatedListener {
         void onExamCreated();
@@ -85,4 +94,5 @@ public class ExamManager {
         void onExamUpdated();
         void onExamUpdateFailed(Exception e);
     }
+
 }

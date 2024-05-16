@@ -15,6 +15,7 @@ import com.example.myapplication.R;
 import com.google.gson.Gson;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.DocumentSnapshot;
+import android.util.Log;
 
 
 import com.example.myapplication.adapters.QuestionAdapter;
@@ -135,21 +136,29 @@ public class ExamEditorActivity extends AppCompatActivity implements QuestionAda
         Button btnSaveExam = findViewById(R.id.btn_save_exam);
         btnSaveExam.setOnClickListener(v -> {
             // Save the exam to Firestore
-            examManager.updateExistingExam(new ExamManager.OnExamUpdatedListener() {
-                @Override
-                public void onExamUpdated() {
-                    // Exam updated successfully
-                    Toast.makeText(ExamEditorActivity.this, "Exam saved", Toast.LENGTH_SHORT).show();
-                }
+            examManager.updateExistingExam(
+                    examManager.getExamId(),
+                    examManager.getExamTitle(),
+                    examManager.getExamDate(),
+                    examManager.getExamDuration(),
+                    questionManager.getQuestions(),
+                    new ExamManager.OnExamUpdatedListener() {
+                        @Override
+                        public void onExamUpdated() {
+                            // Exam updated successfully
+                            Toast.makeText(ExamEditorActivity.this, "Exam saved", Toast.LENGTH_SHORT).show();
+                        }
 
-                @Override
-                public void onExamUpdateFailed(Exception e) {
-                    // Error updating exam
-                    Toast.makeText(ExamEditorActivity.this, "Failed to save exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
+                        @Override
+                        public void onExamUpdateFailed(Exception e) {
+                            // Error updating exam
+                            Toast.makeText(ExamEditorActivity.this, "Failed to save exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+            );
         });
     }
+
 
     private void setupFloatingActionButton() {
         fabAddQuestion = findViewById(R.id.fab_add_question);
@@ -259,7 +268,21 @@ public class ExamEditorActivity extends AppCompatActivity implements QuestionAda
 
                     // Update the exam in Firestore with the new question
                     List<Question> updatedQuestions = new ArrayList<>(questionManager.getQuestions());
-                    FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), updatedQuestions);
+                    FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), updatedQuestions, new FirestoreManager.OnQuestionsSavedListener() {
+                        @Override
+                        public void onQuestionsSaved() {
+                            // Handle successful save
+                            Toast.makeText(ExamEditorActivity.this, "Questions saved successfully", Toast.LENGTH_SHORT).show();
+                            // Navigate to the Exam Management Activity or perform any other necessary actions
+                        }
+
+                        @Override
+                        public void onSaveFailed(Exception e) {
+                            // Handle save failure
+                            Log.e("SaveQuestions", "Failed to save questions: " + e.getMessage());
+                            // Display an error message or perform any other necessary actions
+                        }
+                    });
 
                     // Refresh the RecyclerView
                     questionRecyclerView.setAdapter(questionAdapter);
@@ -273,21 +296,29 @@ public class ExamEditorActivity extends AppCompatActivity implements QuestionAda
                 if (updatedQuestionJson != null) {
                     Question updatedQuestion = GSON.fromJson(updatedQuestionJson, Question.class);
 
-                    // Find the index of the question to be updated
                     int index = questionManager.getQuestions().indexOf(updatedQuestion);
 
                     if (index != -1) {
-                        // Update the question in the QuestionManager
                         questionManager.updateQuestion(index, updatedQuestion);
-
-                        // Notify the adapter about the data change
                         questionAdapter.notifyItemChanged(index);
 
-                        // Update the exam in Firestore with the updated question
                         List<Question> updatedQuestions = new ArrayList<>(questionManager.getQuestions());
-                        FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), updatedQuestions);
+                        FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), updatedQuestions, new FirestoreManager.OnQuestionsSavedListener() {
+                            @Override
+                            public void onQuestionsSaved() {
+                                // Handle successful save
+                                Toast.makeText(ExamEditorActivity.this, "Questions saved successfully", Toast.LENGTH_SHORT).show();
+                                // Navigate to the Exam Management Activity or perform any other necessary actions
+                            }
 
-                        // Refresh the RecyclerView
+                            @Override
+                            public void onSaveFailed(Exception e) {
+                                // Handle save failure
+                                Log.e("SaveQuestions", "Failed to save questions: " + e.getMessage());
+                                // Display an error message or perform any other necessary actions
+                            }
+                        });
+
                         questionRecyclerView.setAdapter(questionAdapter);
                         // OR
                         // questionAdapter.notifyDataSetChanged();
@@ -299,19 +330,33 @@ public class ExamEditorActivity extends AppCompatActivity implements QuestionAda
 
 
     public void onQuestionDeleted(Question question) {
-        // Find the index of the question to be deleted
         int index = questionManager.getQuestions().indexOf(question);
         if (index != -1) {
-            // Delete the question from the QuestionManager
             questionManager.deleteQuestion(index);
-            // Notify the adapter about the data change
             questionAdapter.notifyItemRemoved(index);
-            // Delete the question from Firestore
             FirestoreManager.getInstance().deleteQuestionFromFirestore(examManager.getExamId(), question.getDocumentId());
-            // Remove the deleted question from the questionManager.getQuestions() list
             questionManager.getQuestions().remove(question);
-            // Update the exam in Firestore with the updated question list
-            FirestoreManager.getInstance().updateExistingExam(examManager.getExamId(), examManager.getExamTitle(), examManager.getExamDate(), examManager.getExamDuration(), questionManager.getQuestions());
+
+            FirestoreManager.getInstance().updateExistingExam(
+                    examManager.getExamId(),
+                    examManager.getExamTitle(),
+                    examManager.getExamDate(),
+                    examManager.getExamDuration(),
+                    questionManager.getQuestions(),
+                    new FirestoreManager.OnQuestionsSavedListener() {
+                        @Override
+                        public void onQuestionsSaved() {
+                            Toast.makeText(ExamEditorActivity.this, "Questions saved successfully", Toast.LENGTH_SHORT).show();
+                            // Handle successful save, navigate to the Exam Management Activity or perform other actions
+                        }
+
+                        @Override
+                        public void onSaveFailed(Exception e) {
+                            Log.e("SaveQuestions", "Failed to save questions: " + e.getMessage());
+                            // Handle save failure, display an error message, or perform other actions
+                        }
+                    }
+            );
         }
     }
 
