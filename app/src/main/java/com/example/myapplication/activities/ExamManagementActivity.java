@@ -17,17 +17,19 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ExamManagementActivity extends AppCompatActivity implements ExamListAdapter.OnExamClickListener {
-
-    private RecyclerView rvExamList;
-    private ExamListAdapter examListAdapter;
-    private List<Exam> examList;
 
     private EditText etExamTitle;
     private EditText etExamDate;
     private EditText etExamDuration;
+    private RecyclerView rvExamList;
+    private ExamListAdapter examListAdapter;
+    private List<Exam> examList;
+
     private Button btnCreateExam;
 
     private FirebaseFirestore db;
@@ -67,11 +69,43 @@ public class ExamManagementActivity extends AppCompatActivity implements ExamLis
             }
 
             int examDuration = Integer.parseInt(examDurationText);
-            createExam(examTitle, examDate, examDuration);
+            createAndLaunchExamEditor(examTitle, examDate, examDuration);
         });
     }
 
-    private void loadExamList() {
+    private void createAndLaunchExamEditor(String examTitle, String examDate, int examDuration) {
+        // Create a new exam document in Firestore
+        Map<String, Object> examData = new HashMap<>();
+        examData.put("title", examTitle);
+        examData.put("date", examDate);
+        examData.put("duration", examDuration);
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("exams")
+                .add(examData)
+                .addOnSuccessListener(documentReference -> {
+                    // Exam document created successfully
+                    String examId = documentReference.getId();
+
+                    // Update the examId field in the Firestore document
+                    documentReference.update("examId", examId)
+                            .addOnSuccessListener(aVoid -> {
+                                // Pass the exam data and examId to the ExamEditorActivity
+                                Intent intent = new Intent(ExamManagementActivity.this, ExamEditorActivity.class);
+                                intent.putExtra("examTitle", examTitle);
+                                intent.putExtra("examDate", examDate);
+                                intent.putExtra("examDuration", examDuration);
+                                intent.putExtra("examId", examId);
+                                startActivity(intent);
+                            })
+                            .addOnFailureListener(e -> {
+                                // Error updating examId field
+                                Toast.makeText(ExamManagementActivity.this, "Failed to create exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                });
+    }
+
+        private void loadExamList() {
         // Fetch exam data from Firestore and update the exam list
         db.collection("exams")
                 .get()
@@ -117,10 +151,12 @@ public class ExamManagementActivity extends AppCompatActivity implements ExamLis
 
     @Override
     public void onExamClick(Exam exam) {
-        // Launch the ExamEditorActivity and pass the exam title
+        // Launch the ExamEditorActivity and pass the exam data
         Intent intent = new Intent(this, ExamEditorActivity.class);
         intent.putExtra("examTitle", exam.getTitle());
+        intent.putExtra("examDate", exam.getDate());
+        intent.putExtra("examDuration", exam.getDuration());
+        intent.putExtra("examId", exam.getId());
         startActivity(intent);
     }
 }
-
