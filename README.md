@@ -1,45 +1,85 @@
-To increment the "Exams Created" count when the "Create Exam Framework" button is clicked, you'll need to follow these steps:
+Apologies for the confusion. Let me provide you with a step-by-step guide on how to increment the "Exams Created" count in Java when the `btn_create_exam` button is clicked in the `ExamManagementActivity`.
 
-1. In your `TeacherHomepageActivity`, find the `onCreate` method and initialize the `tv_exams_created_count` TextView by finding its reference:
+1. **In the `ExamManagementActivity` class**
+   - Find the `onCreate` method and initialize the `btn_create_exam` button by finding its reference:
 
-```kotlin
-private lateinit var tvExamsCreatedCount: TextView
+     ```java
+     private Button btnCreateExam;
 
-override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_teacher_homepage)
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         setContentView(R.layout.activity_exam_management);
 
-    // ... (other initialization code)
+         // ... (other initialization code)
 
-    tvExamsCreatedCount = findViewById(R.id.tv_exams_created_count)
+         btnCreateExam = findViewById(R.id.btn_create_exam);
 
-    // ... (other initialization code)
-}
-```
+         // ... (other initialization code)
+     }
+     ```
 
-2. In the same activity, find the click listener for the `btn_create_exam` button and add the code to increment the count:
+2. **In the `ExamManagementActivity` class**
+   - Inside the `onCreate` method, set up the click listener for the `btnCreateExam` button:
 
-```kotlin
-btnCreateExam.setOnClickListener {
-    // Code to create the exam
+     ```java
+     btnCreateExam.setOnClickListener(new View.OnClickListener() {
+         @Override
+         public void onClick(View v) {
+             // Code to create the exam
 
-    // Increment the exams created count
-    val currentCount = tvExamsCreatedCount.text.toString().toIntOrNull() ?: 0
-    val newCount = currentCount + 1
-    tvExamsCreatedCount.text = newCount.toString()
-}
-```
+             // Increment the exams created count
+             incrementExamsCreatedCount();
+         }
+     });
+     ```
+
+3. **In the `ExamManagementActivity` class**
+   - Add a method to increment the "Exams Created" count in the `TeacherHomepageActivity`:
+
+     ```java
+     private void incrementExamsCreatedCount() {
+         // Get a reference to the TeacherHomepageActivity instance
+         TeacherHomepageActivity teacherHomepageActivity = (TeacherHomepageActivity) getApplicationContext();
+
+         // Call the incrementExamsCreatedCount method in the TeacherHomepageActivity
+         teacherHomepageActivity.incrementExamsCreatedCount();
+     }
+     ```
+
+4. **In the `TeacherHomepageActivity` class**
+   - Add a method to increment the "Exams Created" count:
+
+     ```java
+     private TextView tvExamsCreatedCount;
+
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         setContentView(R.layout.activity_teacher_homepage);
+
+         // ... (other initialization code)
+
+         tvExamsCreatedCount = findViewById(R.id.tv_exams_created_count);
+
+         // ... (other initialization code)
+     }
+
+     public void incrementExamsCreatedCount() {
+         int currentCount = Integer.parseInt(tvExamsCreatedCount.getText().toString());
+         int newCount = currentCount + 1;
+         tvExamsCreatedCount.setText(String.valueOf(newCount));
+     }
+     ```
 
 Here's what the code does:
 
-- `val currentCount = tvExamsCreatedCount.text.toString().toIntOrNull() ?: 0`: This line retrieves the current count displayed in the `tvExamsCreatedCount` TextView. If the text is not a valid integer, it defaults to 0.
-- `val newCount = currentCount + 1`: This line increments the current count by 1 to get the new count.
-- `tvExamsCreatedCount.text = newCount.toString()`: This line updates the `tvExamsCreatedCount` TextView with the new count.
+1. In the `ExamManagementActivity`, we find the reference to the `btn_create_exam` button and set up a click listener.
+2. Inside the click listener, we call the `incrementExamsCreatedCount` method.
+3. The `incrementExamsCreatedCount` method in the `ExamManagementActivity` gets a reference to the `TeacherHomepageActivity` instance and calls the `incrementExamsCreatedCount` method in that instance.
+4. In the `TeacherHomepageActivity` class, we find the reference to the `tv_exams_created_count` TextView in the `onCreate` method.
+5. The `incrementExamsCreatedCount` method in the `TeacherHomepageActivity` retrieves the current count from the `tvExamsCreatedCount` TextView, increments it by 1, and updates the TextView with the new count.
 
-Make sure to replace `btnCreateExam` with the actual reference to the "Create Exam Framework" button in your code.
+By following these steps, when the `btn_create_exam` button is clicked in the `ExamManagementActivity`, it will increment the "Exams Created" count displayed in the `tv_exams_created_count` TextView in the `TeacherHomepageActivity`.
 
-By adding this code, whenever the "Create Exam Framework" button is clicked, the "Exams Created" count will be incremented by 1.
-
-Note: This code assumes that the initial count is set to 0 or a valid integer value. If the initial count is not set or is set to a non-numeric value, the code will treat it as 0 and start incrementing from there.
-
-If you want to persist the count across app sessions or device restarts, you'll need to store the count value in a persistent storage solution like SharedPreferences, a database, or a remote server.
+Note: This approach assumes that the `TeacherHomepageActivity` instance is already created and accessible from the `ExamManagementActivity`. If this is not the case in your application's structure, you may need to modify the code accordingly or explore alternative approaches, such as using a shared ViewModel or a messaging system (e.g., EventBus) to communicate between the activities.
