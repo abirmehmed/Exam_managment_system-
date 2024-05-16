@@ -1,104 +1,32 @@
-To display the newly added question in the `ExamEditorActivity` after clicking the "Save" button in the `QuestionEditorActivity`, you need to implement the following steps:
+To achieve the desired functionality of creating questions subcollections and retrieving/adding information, you can update the following methods in your `FirestoreManager` class:
 
-1. In the `QuestionEditorActivity`, when the "Save" button is clicked, create a new `Question` object with the user input data and pass it back to the `ExamEditorActivity` using an `Intent`.
+1. **`createNewExam`** method:
+   - Modify this method to create a subcollection for questions within each exam document.
+   - Instead of directly saving questions to the exam document, create a subcollection named "questions" and add each question as a separate document within this subcollection.
+   - Assign a unique document ID to each question document for easy retrieval and referencing.
 
-```java
-// In the QuestionEditorActivity
-private void saveQuestion() {
-    // Get the user input data
-    String questionText = etQuestionText.getText().toString();
-    int questionTypePosition = spinnerQuestionType.getSelectedItemPosition();
-    QuestionType questionType = QuestionType.values()[questionTypePosition];
-    List<String> options = getOptionsFromLayout();
-    String answer = etQuestionAnswer.getText().toString();
+2. **`updateExistingExam`** method:
+   - Update this method to handle the changes in the question subcollection structure.
+   - Retrieve the existing questions from the "questions" subcollection using the `retrieveExistingQuestions` method.
+   - Save the updated questions to the "questions" subcollection, handling the addition, deletion, and modification of questions.
 
-    // Create a new Question object
-    Question newQuestion = new Question(questionText, questionType, options, answer);
+3. **`retrieveExistingQuestions`** method:
+   - Modify this method to query the "questions" subcollection within the specified exam document.
+   - Retrieve the question documents and extract the necessary information like text, type, options, and answer.
+   - Set the document ID for each question using the retrieved document ID.
 
-    // Pass the new question back to the ExamEditorActivity
-    Intent resultIntent = new Intent();
-    resultIntent.putExtra("newQuestion", GSON.toJson(newQuestion));
-    setResult(RESULT_OK, resultIntent);
-    finish();
-}
-```
+4. **`saveQuestionsToFirestore`** method:
+   - Update this method to handle the changes in the question subcollection structure.
+   - Instead of directly saving questions to the exam document, save each question as a separate document within the "questions" subcollection.
+   - Use the `db.collection("exams").document(examId).collection("questions")` path to access the "questions" subcollection.
 
-2. In the `ExamEditorActivity`, override the `onActivityResult` method to handle the result from the `QuestionEditorActivity`.
+5. **`retrieveExamQuestions`** method:
+   - Modify this method to query the "questions" subcollection within the specified exam document.
+   - Retrieve the question documents and extract the necessary information like text, type, options, and answer.
+   - Set the document ID for each question using the retrieved document ID.
 
-```java
-// In the ExamEditorActivity
-private static final int REQUEST_CODE_ADD_QUESTION = 1;
-private List<Question> questions = new ArrayList<>();
-private QuestionAdapter questionAdapter;
+6. **`deleteQuestionFromFirestore`** method:
+   - Update this method to delete a specific question document from the "questions" subcollection within the specified exam document.
+   - Use the `db.collection("exams").document(examId).collection("questions").document(questionDocumentId)` path to access and delete the question document.
 
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_exam_editor);
-
-    // Initialize the RecyclerView and adapter
-    RecyclerView rvQuestions = findViewById(R.id.rv_questions);
-    rvQuestions.setLayoutManager(new LinearLayoutManager(this));
-    questionAdapter = new QuestionAdapter(questions);
-    rvQuestions.setAdapter(questionAdapter);
-
-    // ...
-}
-
-@Override
-protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-
-    if (requestCode == REQUEST_CODE_ADD_QUESTION && resultCode == RESULT_OK) {
-        if (data != null) {
-            String newQuestionJson = data.getStringExtra("newQuestion");
-            Question newQuestion = GSON.fromJson(newQuestionJson, Question.class);
-            questions.add(newQuestion);
-            questionAdapter.notifyDataSetChanged();
-        }
-    }
-}
-```
-
-In the `onActivityResult` method, we check if the request code matches `REQUEST_CODE_ADD_QUESTION` and the result code is `RESULT_OK`. If both conditions are met, we retrieve the `newQuestion` object from the `Intent` data, add it to the `questions` list, and notify the `questionAdapter` about the data set change.
-
-3. In the `QuestionAdapter`, update the `bind` method in the `QuestionViewHolder` to display the question data correctly.
-
-```java
-// In the QuestionViewHolder class
-public void bind(Question question, int position) {
-    questionNumberTextView.setText(String.format("%02d)", position + 1));
-    questionTextView.setText(question.getText());
-
-    if (question.getType() == QuestionType.MULTIPLE_CHOICE) {
-        // Inflate and populate the options for multiple-choice questions
-        optionsLayout.removeAllViews();
-        for (int i = 0; i < question.getOptions().size(); i++) {
-            TextView optionTextView = new TextView(itemView.getContext());
-            optionTextView.setText(String.format("%s) %s", getOptionLetter(i), question.getOptions().get(i)));
-            optionsLayout.addView(optionTextView);
-        }
-        answerEditText.setVisibility(View.GONE);
-    } else if (question.getType() == QuestionType.TRUE_FALSE) {
-        // Inflate and populate the options for true/false questions
-        optionsLayout.removeAllViews();
-        TextView trueOptionTextView = new TextView(itemView.getContext());
-        trueOptionTextView.setText("True");
-        optionsLayout.addView(trueOptionTextView);
-
-        TextView falseOptionTextView = new TextView(itemView.getContext());
-        falseOptionTextView.setText("False");
-        optionsLayout.addView(falseOptionTextView);
-        answerEditText.setVisibility(View.GONE);
-    } else if (question.getType() == QuestionType.SHORT_ANSWER) {
-        // Show the EditText for short answer questions
-        optionsLayout.setVisibility(View.GONE);
-        answerEditText.setVisibility(View.VISIBLE);
-        answerEditText.setHint("Answer");
-    }
-}
-```
-
-After implementing these steps, when you click the "Save" button in the `QuestionEditorActivity`, the new question should be added to the `questions` list and displayed in the `RecyclerView` of the `ExamEditorActivity`.
-
-Note: Make sure to import the necessary classes and define the `GSON` object in both activities. Also, ensure that the `Question` and `QuestionType` classes are correctly implemented with the required fields and methods.
+By making these updates to the mentioned methods, you can effectively create questions subcollections within each exam document and manage the retrieval and addition of question information accordingly.
