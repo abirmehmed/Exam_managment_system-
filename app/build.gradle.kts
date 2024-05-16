@@ -24,11 +24,13 @@ dependencies {
         exclude(group = "com.google.firebase", module = "firebase-common")
     }
     implementation("com.google.firebase:firebase-common:20.2.0")
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx:21.1.0")
+    implementation("com.google.firebase:firebase-firestore-ktx:24.4.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
     implementation(libs.gson)
+    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("com.google.firebase:firebase-storage:20.1.0")
 }
+

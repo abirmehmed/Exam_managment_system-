@@ -8,6 +8,7 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
+import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -75,18 +76,27 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void handleUserRole(FirebaseUser user) {
-        int selectedRoleId = roleRadioGroup.getCheckedRadioButtonId();
-        if (selectedRoleId == R.id.rb_teacher) {
-            // Proceed to TeacherHomepageActivity
-            Intent intent = new Intent(this, TeacherHomepageActivity.class);
-            startActivity(intent);
-        } else if (selectedRoleId == R.id.rb_student) {
-            // Proceed to StudentHomepageActivity
-            Intent intent = new Intent(this, StudentHomepageActivity.class);
-            startActivity(intent);
+        if (user != null) {
+            Log.d("LoginActivity", "Current user: " + user.getUid());
+            int selectedRoleId = roleRadioGroup.getCheckedRadioButtonId();
+            if (selectedRoleId == R.id.rb_teacher) {
+                // Proceed to TeacherHomepageActivity
+                Intent intent = new Intent(this, TeacherHomepageActivity.class);
+                startActivity(intent);
+            } else if (selectedRoleId == R.id.rb_student) {
+                // Proceed to StudentHomepageActivity
+                Intent intent = new Intent(this, StudentHomepageActivity.class);
+                startActivity(intent);
+            } else {
+                // No radio button selected
+                Toast.makeText(this, "Please select a user role.", Toast.LENGTH_SHORT).show();
+            }
         } else {
-            // No radio button selected
-            Toast.makeText(this, "Please select a user role.", Toast.LENGTH_SHORT).show();
+            Log.d("LoginActivity", "Current user: null");
+            // Handle the case where the user is not authenticated
+            // For example, you can show an error message or redirect the user to the login screen
+            Toast.makeText(this, "User is not authenticated.", Toast.LENGTH_SHORT).show();
         }
     }
+
 }

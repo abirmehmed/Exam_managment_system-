@@ -15,11 +15,14 @@ import com.example.myapplication.adapters.ExamListAdapter;
 import com.example.myapplication.models.Exam;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.myapplication.models.MyApplication;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import android.view.View;
 
 public class ExamManagementActivity extends AppCompatActivity implements ExamListAdapter.OnExamClickListener {
 
@@ -33,6 +36,7 @@ public class ExamManagementActivity extends AppCompatActivity implements ExamLis
     private Button btnCreateExam;
 
     private FirebaseFirestore db;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,19 +62,35 @@ public class ExamManagementActivity extends AppCompatActivity implements ExamLis
         loadExamList();
 
         // Set up Create Exam
-        btnCreateExam.setOnClickListener(v -> {
-            String examTitle = etExamTitle.getText().toString().trim();
-            String examDate = etExamDate.getText().toString().trim();
-            String examDurationText = etExamDuration.getText().toString().trim();
+        btnCreateExam.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String examTitle = etExamTitle.getText().toString().trim();
+                String examDate = etExamDate.getText().toString().trim();
+                String examDurationText = etExamDuration.getText().toString().trim();
 
-            if (examTitle.isEmpty() || examDate.isEmpty() || examDurationText.isEmpty()) {
-                Toast.makeText(this, "Please fill in all the fields", Toast.LENGTH_SHORT).show();
-                return;
+                if (examTitle.isEmpty() || examDate.isEmpty() || examDurationText.isEmpty()) {
+                    Toast.makeText(ExamManagementActivity.this, "Please fill in all the fields", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                int examDuration = Integer.parseInt(examDurationText);
+                createExam(examTitle, examDate, examDuration);
+
+                // Increment the exams created count
+                incrementExamsCreatedCount();
             }
-
-            int examDuration = Integer.parseInt(examDurationText);
-            createAndLaunchExamEditor(examTitle, examDate, examDuration);
         });
+    }
+
+    private void incrementExamsCreatedCount() {
+        // Get a reference to the TeacherHomepageActivity instance
+        TeacherHomepageActivity teacherHomepageActivity = MyApplication.getTeacherHomepageActivity();
+
+        // Call the incrementExamsCreatedCount method in the TeacherHomepageActivity
+        if (teacherHomepageActivity != null) {
+            teacherHomepageActivity.incrementExamsCreatedCount();
+        }
     }
 
     private void createAndLaunchExamEditor(String examTitle, String examDate, int examDuration) {
@@ -87,25 +107,22 @@ public class ExamManagementActivity extends AppCompatActivity implements ExamLis
                     // Exam document created successfully
                     String examId = documentReference.getId();
 
-                    // Update the examId field in the Firestore document
-                    documentReference.update("examId", examId)
-                            .addOnSuccessListener(aVoid -> {
-                                // Pass the exam data and examId to the ExamEditorActivity
-                                Intent intent = new Intent(ExamManagementActivity.this, ExamEditorActivity.class);
-                                intent.putExtra("examTitle", examTitle);
-                                intent.putExtra("examDate", examDate);
-                                intent.putExtra("examDuration", examDuration);
-                                intent.putExtra("examId", examId);
-                                startActivity(intent);
-                            })
-                            .addOnFailureListener(e -> {
-                                // Error updating examId field
-                                Toast.makeText(ExamManagementActivity.this, "Failed to create exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            });
+                    // Pass the exam data and examId to the ExamEditorActivity
+                    Intent intent = new Intent(ExamManagementActivity.this, ExamEditorActivity.class);
+                    intent.putExtra("examTitle", examTitle);
+                    intent.putExtra("examDate", examDate);
+                    intent.putExtra("examDuration", examDuration);
+                    intent.putExtra("examId", examId);
+                    startActivity(intent);
+                })
+                .addOnFailureListener(e -> {
+                    // Error creating exam document
+                    Toast.makeText(ExamManagementActivity.this, "Failed to create exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
-        private void loadExamList() {
+
+    private void loadExamList() {
         // Fetch exam data from Firestore and update the exam list
         db.collection("exams")
                 .get()
@@ -131,17 +148,19 @@ public class ExamManagementActivity extends AppCompatActivity implements ExamLis
                 .add(newExam)
                 .addOnSuccessListener(documentReference -> {
                     // Exam created successfully
+                    String examId = documentReference.getId();
+                    newExam.setId(examId);
                     int newItemIndex = examList.size();
                     examList.add(newExam);
                     examListAdapter.notifyItemInserted(newItemIndex);
                     clearCreateExamFields();
-                    loadExamList(); // Refresh the exam list
                 })
                 .addOnFailureListener(e -> {
                     // Handle error
-                    Toast.makeText(this, "Failed to create exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ExamManagementActivity.this, "Failed to create exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
+
 
     private void clearCreateExamFields() {
         etExamTitle.setText("");

@@ -2,6 +2,7 @@ buildscript {
     dependencies {
         classpath(libs.google.services)
         classpath(platform("com.google.firebase:firebase-bom:32.8.1"))
+        classpath("com.google.gms:google-services:4.3.15")
     }
 }
 

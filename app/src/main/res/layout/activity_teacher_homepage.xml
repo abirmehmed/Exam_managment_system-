@@ -23,7 +23,7 @@
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:contentDescription="@string/profile_picture"
-                android:src="@drawable/ic_notification" />
+                android:src="@drawable/account" />
 
             <TextView
                 android:id="@+id/tv_notification_badge"
