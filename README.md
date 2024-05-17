@@ -1,6 +1,3 @@
-I would suggest adding the screenshot section after the "System Design and Development" section. This is because the screenshots will provide visual evidence of the system's design and functionality, which is a natural extension of the development process.
-
-Here's the revised table of contents with the added screenshot section:
 
 ## Revised Table of Contents:
 
