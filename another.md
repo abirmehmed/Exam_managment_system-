@@ -1,52 +1,96 @@
-Based on the information provided, it seems that the "Invalid Exam ID" toast is being displayed when the `examId` is null or empty when launching the `ExamEditorActivity`. This could happen if the `examId` is not being passed correctly from the `ExamManagementActivity`.
+Based on the code you provided, it seems that you are already passing the exam title, date, duration, and ID from the `ExamManagementActivity` to the `ExamEditorActivity` when creating a new exam or editing an existing one.
 
-To troubleshoot this issue, you can follow these steps:
+However, if you want to display the exam title in the `ExamEditorActivity` from the data retrieved from Firebase, you can follow these steps:
 
-1. **Add Logging in `ExamManagementActivity`**:
-   In the `ExamManagementActivity`, add logging statements to print the value of the `examId` before launching the `ExamEditorActivity`. This will help you verify if the `examId` is being retrieved correctly.
+1. In the `ExamEditorActivity`, remove the line where you retrieve the exam title from the intent extras:
 
-   For example, in the `onExamClick` method:
+```java
+// String examTitle = getIntent().getStringExtra("examTitle");
+```
 
-   ```java
-   @Override
-   public void onExamClick(Exam exam) {
-       // Log the examId value
-       Log.d("ExamManagementActivity", "examId: " + exam.getExamId());
+2. Instead, retrieve the exam document ID from the intent extras and use it to fetch the exam details from Firebase:
 
-       // Launch the ExamEditorActivity and pass the exam data
-       Intent intent = new Intent(this, ExamEditorActivity.class);
-       intent.putExtra("examTitle", exam.getTitle());
-       intent.putExtra("examDate", exam.getDate());
-       intent.putExtra("examDuration", exam.getDuration());
-       intent.putExtra("examId", exam.getExamId());
-       startActivity(intent);
-   }
-   ```
+```java
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_exam_editor);
 
-2. **Check Firestore Data**:
-   Open the Firestore console and verify that the `examId` field is correctly stored in the exam documents. If the `examId` field is missing or incorrect, it could be the reason why the "Invalid Exam ID" toast is being displayed.
+    // Retrieve the exam document ID from the Intent extras
+    String examId = getIntent().getStringExtra("examId");
 
-3. **Verify `Exam` Class**:
-   Ensure that the `Exam` class has a proper `getExamId()` method that returns the correct `examId` value. If the `examId` field is not being set correctly when creating or retrieving the `Exam` objects, the `getExamId()` method will return null or an incorrect value.
+    // Fetch the exam details from Firebase using the document ID
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+    db.collection("exams")
+        .document(examId)
+        .get()
+        .addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                String examTitle = documentSnapshot.getString("title");
+                String examDate = documentSnapshot.getString("date");
+                int examDuration = documentSnapshot.getLong("duration").intValue();
 
-4. **Check `ExamEditorActivity` Code**:
-   In the `ExamEditorActivity`, double-check the code where you retrieve the `examId` from the `Intent` extras. Make sure that you're handling the case where the `examId` is null or empty correctly.
+                // Initialize the ExamManager and QuestionManager with the retrieved data
+                List<Question> questions = new ArrayList<>();
+                examManager = new ExamManager(examId, examTitle, examDate, examDuration, questions);
+                questionManager = new QuestionManager(questions);
 
-   ```java
-   String examId = getIntent().getStringExtra("examId");
-   if (examId != null && !examId.isEmpty()) {
-       // Proceed with retrieving and displaying the exam data
-   } else {
-       // Handle the case where examId is null or empty
-       Toast.makeText(ExamEditorActivity.this, "Invalid exam ID", Toast.LENGTH_SHORT).show();
-   }
-   ```
+                // Set the exam title to the TextView
+                TextView tvExamTitle = findViewById(R.id.tv_exam_title);
+                tvExamTitle.setText(examTitle);
 
-By following these steps, you should be able to identify the root cause of the "Invalid Exam ID" issue and resolve it accordingly. If you're still facing issues after trying these steps, please provide any additional logs or information that might help in further troubleshooting.
+                // ... (other initialization code)
+            } else {
+                // Handle the case where the document doesn't exist
+            }
+        })
+        .addOnFailureListener(e -> {
+            // Handle failure
+        });
+}
+```
 
-Citations:
-[1] https://stackoverflow.com/questions/61028079/firebase-cli-always-shows-error-invalid-project-id
-[2] https://stackoverflow.com/questions/52354743/cannot-resolve-firebasefirestore-android
-[3] https://stackoverflow.com/questions/67845455/could-not-reach-cloud-firestore-backend-connection-failed-1-times
-[4] https://firebase.google.com/docs/firestore/query-data/queries
-[5] https://github.com/firebase/flutterfire/issues/1979
+In this updated code, we retrieve the exam document ID from the intent extras and use it to fetch the exam details from Firebase. Once we have the exam title, date, and duration, we initialize the `ExamManager` and `QuestionManager` with the retrieved data, and we set the exam title to the `TextView` with the ID `tv_exam_title`.
+
+3. In the `ExamManagementActivity`, when launching the `ExamEditorActivity`, pass only the exam document ID as an extra in the intent:
+
+```java
+// In the onExamClick method
+@Override
+public void onExamClick(Exam exam) {
+    // Launch the ExamEditorActivity and pass the exam data
+    Intent intent = new Intent(this, ExamEditorActivity.class);
+    intent.putExtra("examId", exam.getId());
+    startActivity(intent);
+}
+
+// In the createAndLaunchExamEditor method
+private void createAndLaunchExamEditor(String examTitle, String examDate, int examDuration) {
+    // Create a new exam document in Firestore
+    Map<String, Object> examData = new HashMap<>();
+    examData.put("title", examTitle);
+    examData.put("date", examDate);
+    examData.put("duration", examDuration);
+
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+    db.collection("exams")
+            .add(examData)
+            .addOnSuccessListener(documentReference -> {
+                // Exam document created successfully
+                String examId = documentReference.getId();
+
+                // Pass the exam ID to the ExamEditorActivity
+                Intent intent = new Intent(ExamManagementActivity.this, ExamEditorActivity.class);
+                intent.putExtra("examId", examId);
+                startActivity(intent);
+            })
+            .addOnFailureListener(e -> {
+                // Error creating exam document
+                Toast.makeText(ExamManagementActivity.this, "Failed to create exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+}
+```
+
+In these updated methods, we only pass the exam document ID as an extra in the intent when launching the `ExamEditorActivity`.
+
+By following these steps, the `ExamEditorActivity` will retrieve the exam title and other details directly from Firebase using the exam document ID, and display the exam title in the `TextView` with the ID `tv_exam_title`.

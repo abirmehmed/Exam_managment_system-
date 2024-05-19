@@ -1,79 +1,46 @@
-The error `java.lang.ClassCastException: android.app.Application cannot be cast to com.example.myapplication.activities.TeacherHomepageActivity` is occurring because you're trying to cast the application context to the `TeacherHomepageActivity` class, which is not correct.
 
-The issue is in the `incrementExamsCreatedCount` method of your `ExamManagementActivity` class:
+## Revised Table of Contents:
 
-```java
-private void incrementExamsCreatedCount() {
-    // Get a reference to the TeacherHomepageActivity instance
-    TeacherHomepageActivity teacherHomepageActivity = (TeacherHomepageActivity) getApplicationContext();
+1. **Introduction**
+   - **Background**: Explore the evolution of online assessment tools and the need for innovative exam systems in educational settings.
+   - **Literature Review**: Analyze current trends and challenges in online exam systems, highlighting gaps in existing solutions.
+   - **Objectives**: Define the objectives of the research and the intended outcomes of the Online Exam System.
+   - **Thesis Overview**: Provide a roadmap of the paper's structure and key sections.
 
-    // Call the incrementExamsCreatedCount method in the TeacherHomepageActivity
-    teacherHomepageActivity.incrementExamsCreatedCount();
-}
-```
+2. **Research Methodology**
+   - **Research Design**: Explain the methodology used to develop and evaluate the Online Exam System.
+   - **Data Collection**: Detail the data sources, tools, and techniques employed in the research process.
+   - **Analysis Approach**: Describe the analytical methods used to assess the system's performance and effectiveness.
 
-The `getApplicationContext()` method returns an instance of the `Application` class, which is the base class for maintaining global application state. However, you're trying to cast it to the `TeacherHomepageActivity` class, which is not a subclass of `Application`.
+3. **System Requirements and Feasibility Analysis**
+   - **Technical Requirements**: Outline the technical specifications and infrastructure needed for the system's implementation.
+   - **Market Analysis**: Investigate the target market for the Online Exam System and assess its demand and potential adoption.
+   - **Operational Considerations**: Evaluate the operational aspects of deploying and maintaining the system.
+   - **Legal and Ethical Compliance**: Address legal considerations, data privacy, and regulatory requirements.
 
-To fix this issue, you need to get a reference to the `TeacherHomepageActivity` instance in a different way. One approach is to use a static reference to the `TeacherHomepageActivity` instance in your `Application` class.
+4. **System Design and Development**
+   - **Architecture Overview**: Present the system architecture, components, and interactions.
+   - **Module Design**: Detail the functionality of each module and its contribution to the overall system.
+   - **Database Management**: Explain the database design, data structure, and management approach.
+   - **Implementation Details**: Discuss the development process using Android Studio, Java, XML, and Firebase integration.
 
-Here's how you can do it:
+5. **Screenshots**
+   - **System Interface**: Include screenshots of the Online Exam System's user interface, highlighting key features and functionalities.
 
-1. Create a custom `Application` class that extends `Application` and holds a static reference to the `TeacherHomepageActivity` instance:
+6. **Evaluation and Testing**
+   - **Performance Evaluation**: Conduct comprehensive testing, including load capacity tests, to assess system scalability and reliability.
+   - **User Feedback Analysis**: Present feedback from user testing sessions and usability studies.
+   - **Comparative Analysis**: Compare the Online Exam System with existing solutions to highlight its advantages.
 
-```java
-public class MyApplication extends Application {
-    private static TeacherHomepageActivity teacherHomepageActivity;
+7. **Conclusion and Future Directions**
+   - **Key Findings**: Summarize the research findings and contributions of the Online Exam System.
+   - **Future Enhancements**: Propose potential improvements, features, and research directions for further development.
+   - **Impact Assessment**: Discuss the potential impact of the system on education and assessment practices.
 
-    public static void setTeacherHomepageActivity(TeacherHomepageActivity activity) {
-        teacherHomepageActivity = activity;
-    }
+8. **References**
+   - Include a comprehensive list of all sources cited in the research paper following a standard citation format.
 
-    public static TeacherHomepageActivity getTeacherHomepageActivity() {
-        return teacherHomepageActivity;
-    }
-}
-```
+9. **Acknowledgements**
+   - Express gratitude to individuals, institutions, or organizations that have contributed to the development and completion of the Online Exam System project.
 
-2. In your `TeacherHomepageActivity` class, set the static reference to the activity instance in the `onCreate` method:
-
-```java
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_teacher_homepage);
-
-    // ... (other initialization code)
-
-    MyApplication.setTeacherHomepageActivity(this);
-}
-```
-
-3. In your `ExamManagementActivity` class, get the reference to the `TeacherHomepageActivity` instance from the `MyApplication` class:
-
-```java
-private void incrementExamsCreatedCount() {
-    // Get a reference to the TeacherHomepageActivity instance
-    TeacherHomepageActivity teacherHomepageActivity = MyApplication.getTeacherHomepageActivity();
-
-    // Call the incrementExamsCreatedCount method in the TeacherHomepageActivity
-    if (teacherHomepageActivity != null) {
-        teacherHomepageActivity.incrementExamsCreatedCount();
-    }
-}
-```
-
-4. Don't forget to register your custom `MyApplication` class in the `AndroidManifest.xml` file:
-
-```xml
-<application
-    android:name=".MyApplication"
-    ...>
-    <!-- Your activities and other components -->
-</application>
-```
-
-By following these steps, you should be able to get a reference to the `TeacherHomepageActivity` instance correctly and call the `incrementExamsCreatedCount` method without encountering the `ClassCastException`.
-
-As for the `id` field being `null` in your Firestore documents, the solution I provided earlier should work correctly. The Firestore security rules you provided should allow authenticated users to read and write documents in the "exams" collection and the "questions" subcollection.
-
-If you're still encountering issues with the `id` field being `null`, please double-check your code where you're creating or updating the exam documents in Firestore, and ensure that you're setting the `id` field correctly using the automatically generated document ID.
+By adding the screenshot section, you can provide a visual representation of your software development results, showcasing the system's design and functionality. This will help to enhance the overall presentation of your research paper and provide a clearer understanding of your project's outcomes.
