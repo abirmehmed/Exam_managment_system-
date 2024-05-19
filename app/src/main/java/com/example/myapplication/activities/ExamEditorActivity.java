@@ -4,6 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.Toast;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import android.widget.TextView;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.DocumentSnapshot;
 import android.util.Log;
+import android.widget.ImageButton;
 
 
 import com.example.myapplication.adapters.QuestionAdapter;
@@ -47,40 +52,60 @@ public class ExamEditorActivity extends AppCompatActivity implements QuestionAda
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_exam_editor);
 
-        // Retrieve the exam data from the Intent extras
-        String examTitle = getIntent().getStringExtra("examTitle");
-        String examDate = getIntent().getStringExtra("examDate");
-        int examDuration = getIntent().getIntExtra("examDuration", 0);
+        // Retrieve the exam document ID from the Intent extras
         String examId = getIntent().getStringExtra("examId");
-        List<Question> questions = new ArrayList<>();
 
-        // Initialize the ExamManager and QuestionManager
-        examManager = new ExamManager(examId, examTitle, examDate, examDuration, questions);
-        questionManager = new QuestionManager(questions);
+        // Fetch the exam details from Firebase using the document ID
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("exams")
+                .document(examId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String examTitle = documentSnapshot.getString("title");
+                        String examDate = documentSnapshot.getString("date");
+                        int examDuration = documentSnapshot.getLong("duration").intValue();
 
-        // Set up the RecyclerView and adapter
-        setupRecyclerView();
+                        // Initialize the ExamManager and QuestionManager with the retrieved data
+                        List<Question> questions = new ArrayList<>();
+                        examManager = new ExamManager(examId, examTitle, examDate, examDuration, questions);
+                        questionManager = new QuestionManager(questions);
 
-        // Set up the question adapter listeners
-        questionAdapter.setOnQuestionClickListener(this);
-        questionAdapter.setOnQuestionEditListener(this);
-        questionAdapter.setOnQuestionDeleteListener(this);
+                        // Set the exam title to the TextView
+                        TextView tvExamTitle = findViewById(R.id.tv_exam_title);
+                        tvExamTitle.setText(examTitle);
 
-        // Set up the "Add Question" button
-        setupAddQuestionButton();
+                        // Set up the RecyclerView and adapter
+                        setupRecyclerView();
 
-        // Set up the "Save Exam" button
-        setupSaveExamButton();
+                        // Set up the question adapter listeners
+                        questionAdapter.setOnQuestionClickListener(this);
+                        questionAdapter.setOnQuestionEditListener(this);
+                        questionAdapter.setOnQuestionDeleteListener(this);
 
-        // Set up the floating action button for adding a question
-        setupFloatingActionButton();
+                        // Set up the "Add Question" button
+                        setupAddQuestionButton();
 
-        // Set up the ItemTouchHelper for drag-and-drop functionality
-        setupItemTouchHelper();
+                        // Set up the "Save Exam" button
+                        setupSaveExamButton();
 
-        // Set up real-time updates for questions
-        setupQuestionsListener(examId);
+                        // Set up the floating action button for adding a question
+                        setupFloatingActionButton();
+
+                        // Set up the ItemTouchHelper for drag-and-drop functionality
+                        setupItemTouchHelper();
+
+                        // Set up real-time updates for questions
+                        setupQuestionsListener(examId);
+                    } else {
+                        // Handle the case where the document doesn't exist
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // Handle failure
+                });
     }
+
 
     private void setupQuestionsListener(String examId) {
         questionsListener = FirestoreManager.getInstance().getDb()
@@ -124,7 +149,7 @@ public class ExamEditorActivity extends AppCompatActivity implements QuestionAda
     }
 
     private void setupAddQuestionButton() {
-        Button btnAddQuestion = findViewById(R.id.btn_add_question);
+        ImageButton btnAddQuestion = findViewById(R.id.btn_add_question);
         btnAddQuestion.setOnClickListener(v -> {
             // Launch the QuestionEditorActivity
             Intent intent = new Intent(ExamEditorActivity.this, QuestionEditorActivity.class);
@@ -133,7 +158,7 @@ public class ExamEditorActivity extends AppCompatActivity implements QuestionAda
     }
 
     private void setupSaveExamButton() {
-        Button btnSaveExam = findViewById(R.id.btn_save_exam);
+        ImageButton btnSaveExam = findViewById(R.id.btn_save_exam);
         btnSaveExam.setOnClickListener(v -> {
             // Save the exam to Firestore
             examManager.updateExistingExam(
@@ -156,6 +181,14 @@ public class ExamEditorActivity extends AppCompatActivity implements QuestionAda
                         }
                     }
             );
+        });
+    }
+
+    private void setupDeleteExamButton() {
+        ImageButton btnDeleteExam = findViewById(R.id.btn_delete_exam);
+        btnDeleteExam.setOnClickListener(v -> {
+            // Handle delete exam action
+            // ...
         });
     }
 

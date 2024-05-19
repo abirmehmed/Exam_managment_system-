@@ -1,12 +1,19 @@
 package com.example.myapplication.activities;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapplication.R;
+import com.example.myapplication.activities.ProfilePictureUtils;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class StudentHomepageActivity extends AppCompatActivity {
 
@@ -23,6 +30,12 @@ public class StudentHomepageActivity extends AppCompatActivity {
     private Button btnViewGrades;
     private Button btnSettings;
     private Button btnLogOut;
+
+    private static final int REQUEST_IMAGE_PICK = 1;
+    private static final int REQUEST_IMAGE_CAPTURE = 2;
+
+    private ImageView ivProfilePicture;
+    private FirebaseUser currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +57,11 @@ public class StudentHomepageActivity extends AppCompatActivity {
         btnSettings = findViewById(R.id.btn_settings);
         btnLogOut = findViewById(R.id.btn_log_out);
 
+        ivProfilePicture = findViewById(R.id.iv_profile_picture);
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        ivProfilePicture.setOnClickListener(v -> openImagePicker());
+
         // Set up click listeners for the buttons
         btnViewAttendance.setOnClickListener(v -> {
             // Handle view attendance button click
@@ -64,5 +82,31 @@ public class StudentHomepageActivity extends AppCompatActivity {
         btnLogOut.setOnClickListener(v -> {
             // Handle log out button click
         });
+    }
+
+    private void openImagePicker() {
+        // Open the image picker dialog
+    }
+
+    private void openGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(intent, REQUEST_IMAGE_PICK);
+    }
+
+    private void openCamera() {
+        // Implement camera functionality if needed
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == REQUEST_IMAGE_PICK) {
+                Uri imageUri = data.getData();
+                ProfilePictureUtils.uploadProfilePicture(this, imageUri);
+            } else if (requestCode == REQUEST_IMAGE_CAPTURE) {
+                // Handle the captured image if needed
+            }
+        }
     }
 }

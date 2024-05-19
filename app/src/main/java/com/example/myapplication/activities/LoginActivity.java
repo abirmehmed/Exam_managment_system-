@@ -16,12 +16,19 @@ import com.example.myapplication.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import android.text.method.PasswordTransformationMethod;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageView;
+
 public class LoginActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private RadioButton teacherRadioButton;
     private RadioButton studentRadioButton;
     private RadioGroup roleRadioGroup;
+    private EditText passwordEditText;
+    private ImageView passwordVisibilityIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,13 +39,22 @@ public class LoginActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
 
         EditText emailEditText = findViewById(R.id.et_email);
-        EditText passwordEditText = findViewById(R.id.et_password);
+        passwordEditText = findViewById(R.id.et_password);
         Button loginButton = findViewById(R.id.btn_login);
         Button registerButton = findViewById(R.id.btn_register);
-        roleRadioGroup = findViewById(R.id.rg_role); // Find the RadioGroup
+        roleRadioGroup = findViewById(R.id.rg_role);
         teacherRadioButton = findViewById(R.id.rb_teacher);
         studentRadioButton = findViewById(R.id.rb_student);
+        passwordVisibilityIcon = findViewById(R.id.iv_password_visibility);
 
+        passwordVisibilityIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean isPasswordVisible = passwordEditText.getTransformationMethod() == null;
+                passwordEditText.setTransformationMethod(isPasswordVisible ? PasswordTransformationMethod.getInstance() : null);
+                passwordVisibilityIcon.setImageResource(isPasswordVisible ? R.drawable.ic_visibility_off : R.drawable.ic_visibility);
+            }
+        });
         loginButton.setOnClickListener(v -> {
             String email = emailEditText.getText().toString().trim();
             String password = passwordEditText.getText().toString().trim();
@@ -98,5 +114,4 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "User is not authenticated.", Toast.LENGTH_SHORT).show();
         }
     }
-
 }

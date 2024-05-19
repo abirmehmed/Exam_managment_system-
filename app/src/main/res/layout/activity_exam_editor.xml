@@ -27,26 +27,38 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/btn_add_question"
-                style="@style/Widget.App.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/add_question"
-                android:textColor="@android:color/white" />
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/add_question"
+                android:src="@drawable/ic_add"
+                app:tint="@android:color/white" />
 
-            <Button
+            <ImageButton
+                android:id="@+id/btn_delete_exam"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/delete_exam"
+                android:src="@drawable/ic_delete"
+                app:tint="@android:color/white" />
+
+            <ImageButton
                 android:id="@+id/btn_save_exam"
-                style="@style/Widget.App.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/save_exam"
-                android:textColor="@android:color/white" />
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/save_exam"
+                android:src="@drawable/ic_save"
+                app:tint="@android:color/white" />
+
+
 
         </LinearLayout>
 
     </androidx.appcompat.widget.Toolbar>
-
 
     <ScrollView
         android:layout_width="match_parent"

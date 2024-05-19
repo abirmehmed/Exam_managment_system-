@@ -74,5 +74,10 @@
 
     <string name="answer_hint">Answer Hint</string>
 
+    <string name="save">Save</string>
+    <string name="edit">Edit</string>
+
+    <string name="delete_exam">Delete Exam</string>
+
 
 </resources>
