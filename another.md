@@ -1,82 +1,105 @@
-The issue you're facing is likely due to the way you're navigating between activities. In Android, you need to start a new activity explicitly by creating an `Intent` and calling the `startActivity` method.
+To display the questions from Firestore in the `ExamActivity` and show clickable round boxes for multiple-choice questions, you'll need to update the `QuestionAdapter` and the layout file for the question items.
 
-To navigate from the `ExamListActivity` (where you have the list of exams) to the `ExamActivity` (where you display the exam details and questions), you need to follow these steps:
+First, let's update the `QuestionAdapter` to handle different question types and display the options with clickable round boxes.
 
-1. In the `ExamListActivity`, set up a click listener for the `RecyclerView` items (exams).
+1. Create a new layout file for the question item, e.g., `item_question.xml`:
 
-2. Inside the click listener, create an `Intent` to start the `ExamActivity` and pass the necessary data (e.g., exam ID) as extras.
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
 
-3. Call the `startActivity` method with the created `Intent`.
+    <TextView
+        android:id="@+id/tv_question_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="16sp" />
 
-Here's an example of how you can implement this in the `ExamListActivity`:
+    <RadioGroup
+        android:id="@+id/rg_options"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
 
-```java
-// Assuming you have an ExamListAdapter that extends RecyclerView.Adapter
-private ExamListAdapter examListAdapter;
-
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_exam_list);
-
-    RecyclerView rvExamList = findViewById(R.id.rv_exam_list);
-    examListAdapter = new ExamListAdapter(examList);
-    rvExamList.setAdapter(examListAdapter);
-
-    // Set up the click listener for the exam items
-    examListAdapter.setOnExamClickListener(exam -> {
-        Intent intent = new Intent(ExamListActivity.this, ExamActivity.class);
-        intent.putExtra("examId", exam.getId());
-        startActivity(intent);
-    });
-}
+</LinearLayout>
 ```
 
-In the `ExamListAdapter`, you'll need to define an interface for the click listener and implement it in the `ExamListActivity`. Here's an example:
+2. Update the `QuestionAdapter` to bind the question data and handle different question types:
 
 ```java
-// In the ExamListAdapter class
-public interface OnExamClickListener {
-    void onExamClick(Exam exam);
-}
+public class QuestionAdapter extends RecyclerView.Adapter<QuestionAdapter.QuestionViewHolder> {
+    private List<Question> questions;
 
-private OnExamClickListener onExamClickListener;
+    public QuestionAdapter(List<Question> questions) {
+        this.questions = questions;
+    }
 
-public void setOnExamClickListener(OnExamClickListener listener) {
-    this.onExamClickListener = listener;
-}
+    @NonNull
+    @Override
+    public QuestionViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_question, parent, false);
+        return new QuestionViewHolder(view);
+    }
 
-// In the onBindViewHolder method
-@Override
-public void onBindViewHolder(@NonNull ExamViewHolder holder, int position) {
-    Exam exam = examList.get(position);
-    holder.bind(exam);
+    @Override
+    public void onBindViewHolder(@NonNull QuestionViewHolder holder, int position) {
+        Question question = questions.get(position);
+        holder.bind(question);
+    }
 
-    holder.itemView.setOnClickListener(v -> {
-        if (onExamClickListener != null) {
-            onExamClickListener.onExamClick(exam);
+    @Override
+    public int getItemCount() {
+        return questions.size();
+    }
+
+    class QuestionViewHolder extends RecyclerView.ViewHolder {
+        TextView tvQuestionText;
+        RadioGroup rgOptions;
+
+        QuestionViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvQuestionText = itemView.findViewById(R.id.tv_question_text);
+            rgOptions = itemView.findViewById(R.id.rg_options);
         }
-    });
-}
-```
 
-In the `ExamActivity`, you'll need to retrieve the exam ID from the `Intent` extras and use it to fetch the exam data from Firebase Firestore or any other data source.
+        void bind(Question question) {
+            tvQuestionText.setText(question.getText());
+            rgOptions.removeAllViews();
 
-```java
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_exam);
+            if (question.getType() == QuestionType.MULTIPLE_CHOICE) {
+                for (int i = 0; i < question.getOptions().size(); i++) {
+                    RadioButton radioButton = new RadioButton(itemView.getContext());
+                    radioButton.setText(question.getOptions().get(i));
+                    rgOptions.addView(radioButton);
+                }
+            } else if (question.getType() == QuestionType.TRUE_FALSE) {
+                RadioButton trueButton = new RadioButton(itemView.getContext());
+                trueButton.setText("True");
+                rgOptions.addView(trueButton);
 
-    // ... (other initialization code)
-
-    String examId = getIntent().getStringExtra("examId");
-    if (examId != null) {
-        examRepository.getExamData(examId, new OnExamDataFetchedListener() {
-            // ... (implementation of onExamDataFetched and onExamDataFetchFailed)
-        });
+                RadioButton falseButton = new RadioButton(itemView.getContext());
+                falseButton.setText("False");
+                rgOptions.addView(falseButton);
+            }
+        }
     }
 }
 ```
 
-By following these steps, you should be able to navigate from the `ExamListActivity` to the `ExamActivity` when clicking on an exam item in the list. The `ExamActivity` will receive the exam ID and fetch the exam data accordingly.
+In this updated `QuestionAdapter`, we're using a `RadioGroup` to display the options for multiple-choice and true/false questions. The `bind` method checks the question type and adds the corresponding `RadioButton` views to the `RadioGroup`.
+
+3. In the `ExamActivity`, update the `QuestionAdapter` initialization:
+
+```java
+List<Question> questions = exam.getQuestions();
+questionAdapter = new QuestionAdapter(questions);
+rvQuestionList.setLayoutManager(new LinearLayoutManager(ExamActivity.this));
+rvQuestionList.setAdapter(questionAdapter);
+```
+
+With these changes, the `ExamActivity` should display the list of questions from Firestore, and the `QuestionAdapter` will render the questions with clickable round boxes (represented by `RadioButton` views) for multiple-choice and true/false questions.
+
+Note: Make sure to update the `Question` and `QuestionType` models to match the structure of the data in Firestore, and handle any additional fields or properties as needed.
