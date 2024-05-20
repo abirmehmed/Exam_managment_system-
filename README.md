@@ -1,46 +1,108 @@
+To retrieve the exam data from Firebase Firestore and display the questions without the answers in the `ExamActivity`, you can follow these steps:
 
-## Revised Table of Contents:
+1. Create a new class called `ExamRepository` or `FirestoreManager` (or any other name you prefer) to handle the interaction with Firebase Firestore.
 
-1. **Introduction**
-   - **Background**: Explore the evolution of online assessment tools and the need for innovative exam systems in educational settings.
-   - **Literature Review**: Analyze current trends and challenges in online exam systems, highlighting gaps in existing solutions.
-   - **Objectives**: Define the objectives of the research and the intended outcomes of the Online Exam System.
-   - **Thesis Overview**: Provide a roadmap of the paper's structure and key sections.
+2. In the `ExamRepository` class, create a method to fetch the exam data from Firestore. Here's an example implementation:
 
-2. **Research Methodology**
-   - **Research Design**: Explain the methodology used to develop and evaluate the Online Exam System.
-   - **Data Collection**: Detail the data sources, tools, and techniques employed in the research process.
-   - **Analysis Approach**: Describe the analytical methods used to assess the system's performance and effectiveness.
+```java
+public class ExamRepository {
+    private static final String EXAMS_COLLECTION = "exams";
+    private static final String QUESTIONS_COLLECTION = "questions";
 
-3. **System Requirements and Feasibility Analysis**
-   - **Technical Requirements**: Outline the technical specifications and infrastructure needed for the system's implementation.
-   - **Market Analysis**: Investigate the target market for the Online Exam System and assess its demand and potential adoption.
-   - **Operational Considerations**: Evaluate the operational aspects of deploying and maintaining the system.
-   - **Legal and Ethical Compliance**: Address legal considerations, data privacy, and regulatory requirements.
+    private FirebaseFirestore firestore;
 
-4. **System Design and Development**
-   - **Architecture Overview**: Present the system architecture, components, and interactions.
-   - **Module Design**: Detail the functionality of each module and its contribution to the overall system.
-   - **Database Management**: Explain the database design, data structure, and management approach.
-   - **Implementation Details**: Discuss the development process using Android Studio, Java, XML, and Firebase integration.
+    public ExamRepository() {
+        firestore = FirebaseFirestore.getInstance();
+    }
 
-5. **Screenshots**
-   - **System Interface**: Include screenshots of the Online Exam System's user interface, highlighting key features and functionalities.
+    public void getExamData(String examId, OnExamDataFetchedListener listener) {
+        firestore.collection(EXAMS_COLLECTION)
+                .document(examId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Exam exam = documentSnapshot.toObject(Exam.class);
+                        exam.setId(documentSnapshot.getId());
 
-6. **Evaluation and Testing**
-   - **Performance Evaluation**: Conduct comprehensive testing, including load capacity tests, to assess system scalability and reliability.
-   - **User Feedback Analysis**: Present feedback from user testing sessions and usability studies.
-   - **Comparative Analysis**: Compare the Online Exam System with existing solutions to highlight its advantages.
+                        firestore.collection(EXAMS_COLLECTION)
+                                .document(examId)
+                                .collection(QUESTIONS_COLLECTION)
+                                .get()
+                                .addOnSuccessListener(querySnapshot -> {
+                                    List<Question> questions = new ArrayList<>();
+                                    for (QueryDocumentSnapshot document : querySnapshot) {
+                                        Question question = document.toObject(Question.class);
+                                        question.setDocumentId(document.getId());
+                                        questions.add(question);
+                                    }
+                                    exam.setQuestions(questions);
+                                    listener.onExamDataFetched(exam);
+                                })
+                                .addOnFailureListener(e -> listener.onExamDataFetchFailed(e));
+                    } else {
+                        listener.onExamDataFetchFailed(new Exception("Exam not found"));
+                    }
+                })
+                .addOnFailureListener(e -> listener.onExamDataFetchFailed(e));
+    }
 
-7. **Conclusion and Future Directions**
-   - **Key Findings**: Summarize the research findings and contributions of the Online Exam System.
-   - **Future Enhancements**: Propose potential improvements, features, and research directions for further development.
-   - **Impact Assessment**: Discuss the potential impact of the system on education and assessment practices.
+    public interface OnExamDataFetchedListener {
+        void onExamDataFetched(Exam exam);
+        void onExamDataFetchFailed(Exception e);
+    }
+}
+```
 
-8. **References**
-   - Include a comprehensive list of all sources cited in the research paper following a standard citation format.
+3. In the `ExamActivity`, create an instance of the `ExamRepository` and call the `getExamData` method to fetch the exam data.
 
-9. **Acknowledgements**
-   - Express gratitude to individuals, institutions, or organizations that have contributed to the development and completion of the Online Exam System project.
+```java
+private ExamRepository examRepository;
 
-By adding the screenshot section, you can provide a visual representation of your software development results, showcasing the system's design and functionality. This will help to enhance the overall presentation of your research paper and provide a clearer understanding of your project's outcomes.
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_exam);
+
+    // ... (other initialization code)
+
+    examRepository = new ExamRepository();
+    String examId = "ea9gXqquWPBMhUXGPpPK"; // Replace with the actual exam ID
+    examRepository.getExamData(examId, new ExamRepository.OnExamDataFetchedListener() {
+        @Override
+        public void onExamDataFetched(Exam exam) {
+            // Set up the exam details
+            tvExamName.setText(exam.getTitle());
+            examDurationMillis = exam.getDuration() * 60 * 1000;
+
+            // Set up the RecyclerView and QuestionAdapter
+            List<Question> questions = exam.getQuestions();
+            questionAdapter = new QuestionAdapter(questions);
+            rvQuestionList.setLayoutManager(new LinearLayoutManager(ExamActivity.this));
+            rvQuestionList.setAdapter(questionAdapter);
+
+            // Start the countdown timer
+            startCountdownTimer();
+        }
+
+        @Override
+        public void onExamDataFetchFailed(Exception e) {
+            // Handle the error
+        }
+    });
+}
+```
+
+4. In the `QuestionAdapter`, modify the `bind` method to hide the answer for each question. You can remove the code that sets the answer or make it conditional based on whether the exam has been submitted or not.
+
+```java
+public void bind(QuestionViewHolder holder, Question question, int position) {
+    // ... (other code)
+
+    // Hide the answer
+    holder.answerEditText.setVisibility(View.GONE);
+}
+```
+
+With these changes, when you click on an exam from the list, the `ExamActivity` will fetch the exam data from Firebase Firestore, including the questions. The questions will be displayed in the `RecyclerView` without showing the answers. When the user submits the exam, you can retrieve the answers from the `QuestionAdapter` and submit them to Firebase Firestore or any other data source.
+
+Note: Make sure to update the `Exam` and `Question` classes to match the structure of the data in Firebase Firestore, and handle any additional fields or properties as needed.
