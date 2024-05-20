@@ -1,96 +1,82 @@
-Based on the code you provided, it seems that you are already passing the exam title, date, duration, and ID from the `ExamManagementActivity` to the `ExamEditorActivity` when creating a new exam or editing an existing one.
+The issue you're facing is likely due to the way you're navigating between activities. In Android, you need to start a new activity explicitly by creating an `Intent` and calling the `startActivity` method.
 
-However, if you want to display the exam title in the `ExamEditorActivity` from the data retrieved from Firebase, you can follow these steps:
+To navigate from the `ExamListActivity` (where you have the list of exams) to the `ExamActivity` (where you display the exam details and questions), you need to follow these steps:
 
-1. In the `ExamEditorActivity`, remove the line where you retrieve the exam title from the intent extras:
+1. In the `ExamListActivity`, set up a click listener for the `RecyclerView` items (exams).
+
+2. Inside the click listener, create an `Intent` to start the `ExamActivity` and pass the necessary data (e.g., exam ID) as extras.
+
+3. Call the `startActivity` method with the created `Intent`.
+
+Here's an example of how you can implement this in the `ExamListActivity`:
 
 ```java
-// String examTitle = getIntent().getStringExtra("examTitle");
+// Assuming you have an ExamListAdapter that extends RecyclerView.Adapter
+private ExamListAdapter examListAdapter;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_exam_list);
+
+    RecyclerView rvExamList = findViewById(R.id.rv_exam_list);
+    examListAdapter = new ExamListAdapter(examList);
+    rvExamList.setAdapter(examListAdapter);
+
+    // Set up the click listener for the exam items
+    examListAdapter.setOnExamClickListener(exam -> {
+        Intent intent = new Intent(ExamListActivity.this, ExamActivity.class);
+        intent.putExtra("examId", exam.getId());
+        startActivity(intent);
+    });
+}
 ```
 
-2. Instead, retrieve the exam document ID from the intent extras and use it to fetch the exam details from Firebase:
+In the `ExamListAdapter`, you'll need to define an interface for the click listener and implement it in the `ExamListActivity`. Here's an example:
+
+```java
+// In the ExamListAdapter class
+public interface OnExamClickListener {
+    void onExamClick(Exam exam);
+}
+
+private OnExamClickListener onExamClickListener;
+
+public void setOnExamClickListener(OnExamClickListener listener) {
+    this.onExamClickListener = listener;
+}
+
+// In the onBindViewHolder method
+@Override
+public void onBindViewHolder(@NonNull ExamViewHolder holder, int position) {
+    Exam exam = examList.get(position);
+    holder.bind(exam);
+
+    holder.itemView.setOnClickListener(v -> {
+        if (onExamClickListener != null) {
+            onExamClickListener.onExamClick(exam);
+        }
+    });
+}
+```
+
+In the `ExamActivity`, you'll need to retrieve the exam ID from the `Intent` extras and use it to fetch the exam data from Firebase Firestore or any other data source.
 
 ```java
 @Override
 protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_exam_editor);
+    setContentView(R.layout.activity_exam);
 
-    // Retrieve the exam document ID from the Intent extras
+    // ... (other initialization code)
+
     String examId = getIntent().getStringExtra("examId");
-
-    // Fetch the exam details from Firebase using the document ID
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    db.collection("exams")
-        .document(examId)
-        .get()
-        .addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                String examTitle = documentSnapshot.getString("title");
-                String examDate = documentSnapshot.getString("date");
-                int examDuration = documentSnapshot.getLong("duration").intValue();
-
-                // Initialize the ExamManager and QuestionManager with the retrieved data
-                List<Question> questions = new ArrayList<>();
-                examManager = new ExamManager(examId, examTitle, examDate, examDuration, questions);
-                questionManager = new QuestionManager(questions);
-
-                // Set the exam title to the TextView
-                TextView tvExamTitle = findViewById(R.id.tv_exam_title);
-                tvExamTitle.setText(examTitle);
-
-                // ... (other initialization code)
-            } else {
-                // Handle the case where the document doesn't exist
-            }
-        })
-        .addOnFailureListener(e -> {
-            // Handle failure
+    if (examId != null) {
+        examRepository.getExamData(examId, new OnExamDataFetchedListener() {
+            // ... (implementation of onExamDataFetched and onExamDataFetchFailed)
         });
+    }
 }
 ```
 
-In this updated code, we retrieve the exam document ID from the intent extras and use it to fetch the exam details from Firebase. Once we have the exam title, date, and duration, we initialize the `ExamManager` and `QuestionManager` with the retrieved data, and we set the exam title to the `TextView` with the ID `tv_exam_title`.
-
-3. In the `ExamManagementActivity`, when launching the `ExamEditorActivity`, pass only the exam document ID as an extra in the intent:
-
-```java
-// In the onExamClick method
-@Override
-public void onExamClick(Exam exam) {
-    // Launch the ExamEditorActivity and pass the exam data
-    Intent intent = new Intent(this, ExamEditorActivity.class);
-    intent.putExtra("examId", exam.getId());
-    startActivity(intent);
-}
-
-// In the createAndLaunchExamEditor method
-private void createAndLaunchExamEditor(String examTitle, String examDate, int examDuration) {
-    // Create a new exam document in Firestore
-    Map<String, Object> examData = new HashMap<>();
-    examData.put("title", examTitle);
-    examData.put("date", examDate);
-    examData.put("duration", examDuration);
-
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    db.collection("exams")
-            .add(examData)
-            .addOnSuccessListener(documentReference -> {
-                // Exam document created successfully
-                String examId = documentReference.getId();
-
-                // Pass the exam ID to the ExamEditorActivity
-                Intent intent = new Intent(ExamManagementActivity.this, ExamEditorActivity.class);
-                intent.putExtra("examId", examId);
-                startActivity(intent);
-            })
-            .addOnFailureListener(e -> {
-                // Error creating exam document
-                Toast.makeText(ExamManagementActivity.this, "Failed to create exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
-}
-```
-
-In these updated methods, we only pass the exam document ID as an extra in the intent when launching the `ExamEditorActivity`.
-
-By following these steps, the `ExamEditorActivity` will retrieve the exam title and other details directly from Firebase using the exam document ID, and display the exam title in the `TextView` with the ID `tv_exam_title`.
+By following these steps, you should be able to navigate from the `ExamListActivity` to the `ExamActivity` when clicking on an exam item in the list. The `ExamActivity` will receive the exam ID and fetch the exam data accordingly.
