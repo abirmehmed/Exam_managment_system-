@@ -1,19 +1,150 @@
-After reviewing the code from the provided GitHub repository, I have a better understanding of the current state of your Online Exam System project. Here are some suggestions to improve and enhance your thesis:
+Based on the code and data structure you provided, I can see that you have an "exams" collection in Firestore, where each document represents an exam. Inside each exam document, there is a subcollection called "questions" that contains the questions for that exam.
 
-1. **Detailed System Architecture**: Provide a comprehensive description of the system architecture, including the front-end (Android app), back-end (Firebase), and the communication between them. Explain the rationale behind the chosen technologies and design patterns, and how they contribute to the system's scalability, security, and performance.
+To display the questions in the frontend, you need to make some modifications to your code. Here's how you can update your `ExamActivity` and `ExamQuestionAdapter`:
 
-2. **Database Design and Implementation**: Elaborate on the database design and implementation using Firebase Realtime Database or Cloud Firestore. Discuss the data models, schema design, and the rationale behind the chosen database approach. Explain how the database structure supports the system's functionality, such as storing exam questions, user data, and results.
+1. Update the `ExamActivity` to retrieve the questions from the subcollection:
 
-3. **Security Considerations**: Expand on the security measures implemented in your system, such as user authentication, data encryption, and secure communication protocols. Discuss the potential security risks and vulnerabilities, and how your system mitigates them. Additionally, address compliance with relevant data protection regulations, such as GDPR or HIPAA.
+```java
+examRepository.getExamData(examId, new ExamRepository.OnExamDataFetchedListener() {
+    @Override
+    public void onExamDataFetched(Exam exam) {
+        // Set up the exam details
+        tvExamName.setText(exam.getTitle());
+        examDurationMillis = exam.getDuration() * 60 * 1000;
 
-4. **User Interface and User Experience**: Provide detailed information about the user interface design process, including wireframes, mockups, and the rationale behind the design choices. Discuss the user experience considerations, such as accessibility, responsiveness, and intuitive navigation, and how they contribute to a seamless exam experience for students and educators.
+        // Set up the RecyclerView and ExamQuestionAdapter
+        List<Question> questions = exam.getQuestions();
+        examQuestionAdapter = new ExamQuestionAdapter(questions);
+        rvQuestionList.setLayoutManager(new LinearLayoutManager(ExamActivity.this));
+        rvQuestionList.setAdapter(examQuestionAdapter);
 
-5. **Testing and Evaluation**: Describe the testing methodologies and techniques employed to ensure the system's functionality, reliability, and performance. Discuss the results of load testing, user acceptance testing, and any other relevant evaluations. Additionally, include user feedback and usability studies to assess the system's effectiveness and identify areas for improvement.
+        // Start the countdown timer
+        startCountdownTimer();
+    }
 
-6. **Future Enhancements and Scalability**: Outline potential future enhancements and scalability considerations for your Online Exam System. This could include features like AI-powered proctoring, adaptive testing algorithms, gamification elements, or integration with learning management systems. Discuss how the current architecture and design can accommodate these future enhancements.
+    @Override
+    public void onExamDataFetchFailed(Exception e) {
+        // Handle the error
+    }
+});
+```
 
-7. **Comparative Analysis**: Conduct a comparative analysis of your Online Exam System with existing solutions in the market. Identify the unique features, strengths, and weaknesses of your system, and discuss how it differentiates itself from competitors.
+2. Update the `ExamQuestionAdapter` to handle different question types:
 
-8. **Real-world Implementation and Impact**: If possible, discuss any real-world implementation or pilot testing of your Online Exam System in educational institutions. Analyze the impact of your system on the exam process, student engagement, and overall educational outcomes.
+```java
+class ExamQuestionViewHolder extends RecyclerView.ViewHolder {
+    TextView tvQuestionText;
+    RadioGroup rgOptions;
 
-By incorporating these suggestions, your thesis will provide a comprehensive and in-depth analysis of your Online Exam System project, showcasing the technical aspects, design considerations, and the potential impact on educational assessment practices.
+    ExamQuestionViewHolder(@NonNull View itemView) {
+        super(itemView);
+        tvQuestionText = itemView.findViewById(R.id.tv_question_text);
+        rgOptions = itemView.findViewById(R.id.rg_options);
+    }
+
+    void bind(Question question, int position) {
+        tvQuestionText.setText(question.getText());
+        rgOptions.removeAllViews();
+
+        if (question.getType() == QuestionType.MULTIPLE_CHOICE) {
+            for (int i = 0; i < question.getOptions().size(); i++) {
+                RadioButton radioButton = new RadioButton(itemView.getContext());
+                radioButton.setText(question.getOptions().get(i));
+                radioButton.setTag(i); // Set the option index as the tag
+                rgOptions.addView(radioButton);
+
+                // Check if the user has selected this option
+                if (userAnswers.get(position) != null && userAnswers.get(position).equals(question.getOptions().get(i))) {
+                    radioButton.setChecked(true);
+                }
+
+                // Set the click listener for the radio button
+                radioButton.setOnClickListener(v -> {
+                    int selectedIndex = (int) v.getTag();
+                    userAnswers.set(position, question.getOptions().get(selectedIndex));
+                });
+            }
+        } else if (question.getType() == QuestionType.TRUE_FALSE) {
+            RadioButton trueButton = new RadioButton(itemView.getContext());
+            trueButton.setText("True");
+            trueButton.setTag(0); // Set the tag as 0 for True
+            rgOptions.addView(trueButton);
+
+            RadioButton falseButton = new RadioButton(itemView.getContext());
+            falseButton.setText("False");
+            falseButton.setTag(1); // Set the tag as 1 for False
+            rgOptions.addView(falseButton);
+
+            // Check if the user has selected an option
+            if (userAnswers.get(position) != null) {
+                if (userAnswers.get(position).equals("True")) {
+                    trueButton.setChecked(true);
+                } else if (userAnswers.get(position).equals("False")) {
+                    falseButton.setChecked(true);
+                }
+            }
+
+            // Set the click listener for the radio buttons
+            trueButton.setOnClickListener(v -> userAnswers.set(position, "True"));
+            falseButton.setOnClickListener(v -> userAnswers.set(position, "False"));
+        } else if (question.getType() == QuestionType.SHORT_ANSWER) {
+            // For short answer questions, you can't display an input field in the RecyclerView
+            // You'll need to handle this case separately in the ExamActivity
+            userAnswers.set(position, null);
+        }
+    }
+}
+```
+
+In this updated `ExamQuestionAdapter`, we're handling different question types:
+
+- For `MULTIPLE_CHOICE` questions, we're creating `RadioButton` views dynamically and adding them to the `RadioGroup`. The user can select one of the options by clicking on the corresponding `RadioButton`.
+- For `TRUE_FALSE` questions, we're creating two `RadioButton` views for "True" and "False" and adding them to the `RadioGroup`. The user can select either "True" or "False" by clicking on the respective `RadioButton`.
+- For `SHORT_ANSWER` questions, we're setting the corresponding index in the `userAnswers` list to `null`. You'll need to handle short answer questions separately in the `ExamActivity`.
+
+3. Handle short answer questions in the `ExamActivity`:
+
+```java
+// Inside the onExamDataFetched method
+List<Question> questions = exam.getQuestions();
+examQuestionAdapter = new ExamQuestionAdapter(questions);
+rvQuestionList.setLayoutManager(new LinearLayoutManager(ExamActivity.this));
+rvQuestionList.setAdapter(examQuestionAdapter);
+
+// Create EditText views for short answer questions
+for (int i = 0; i < questions.size(); i++) {
+    Question question = questions.get(i);
+    if (question.getType() == QuestionType.SHORT_ANSWER) {
+        EditText editText = new EditText(ExamActivity.this);
+        editText.setHint("Enter your answer");
+        shortAnswerEditTexts.add(editText);
+        // Add the EditText to your layout (e.g., a LinearLayout or a separate container)
+    }
+}
+
+// ...
+
+// In the submitExam method
+private void submitExam() {
+    List<String> userAnswers = examQuestionAdapter.getUserAnswers();
+
+    // Handle short answer questions
+    for (int i = 0; i < shortAnswerEditTexts.size(); i++) {
+        EditText editText = shortAnswerEditTexts.get(i);
+        String shortAnswer = editText.getText().toString();
+        // Add the short answer to the userAnswers list or handle it separately
+    }
+
+    // Submit the answers to Firebase Firestore or any other data source
+    submitAnswersToFirestore(userAnswers);
+}
+```
+
+In this updated code:
+
+- Inside the `onExamDataFetched` method, we're creating `EditText` views for short answer questions and adding them to the `shortAnswerEditTexts` list. You'll need to add these `EditText` views to your layout (e.g., a `LinearLayout` or a separate container).
+- In the `submitExam` method, we're iterating through the `shortAnswerEditTexts` list and retrieving the user's input for each short answer question. You can either add these short answers to the `userAnswers` list or handle them separately.
+
+With these changes, you should be able to display the questions from Firestore in your frontend, including multiple-choice, true/false, and short answer questions. The user can select options for multiple-choice and true/false questions, and enter their answers for short answer questions.
+
+Note: Make sure to update your layout files (`activity_exam.xml` and `item_exam_question.xml`) to accommodate the `EditText` views for short answer questions and ensure proper positioning and layout of the views.
