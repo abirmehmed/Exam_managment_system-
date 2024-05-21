@@ -1,96 +1,108 @@
-Based on the code you provided, it seems that you are already passing the exam title, date, duration, and ID from the `ExamManagementActivity` to the `ExamEditorActivity` when creating a new exam or editing an existing one.
+Sure, here's a step-by-step guide on how to implement the solution:
 
-However, if you want to display the exam title in the `ExamEditorActivity` from the data retrieved from Firebase, you can follow these steps:
+## Step 1: Update the ExamActivity class
 
-1. In the `ExamEditorActivity`, remove the line where you retrieve the exam title from the intent extras:
+### 1.1 Add a new instance variable for the EditText
+
+In the `ExamActivity` class, add a new instance variable for the `EditText` that will be used for short answer questions:
 
 ```java
-// String examTitle = getIntent().getStringExtra("examTitle");
+private EditText etShortAnswer;
 ```
 
-2. Instead, retrieve the exam document ID from the intent extras and use it to fetch the exam details from Firebase:
+### 1.2 Initialize the etShortAnswer view
+
+In the `onCreate` method, initialize the `etShortAnswer` view by finding it in the layout:
 
 ```java
 @Override
 protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_exam_editor);
-
-    // Retrieve the exam document ID from the Intent extras
-    String examId = getIntent().getStringExtra("examId");
-
-    // Fetch the exam details from Firebase using the document ID
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    db.collection("exams")
-        .document(examId)
-        .get()
-        .addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                String examTitle = documentSnapshot.getString("title");
-                String examDate = documentSnapshot.getString("date");
-                int examDuration = documentSnapshot.getLong("duration").intValue();
-
-                // Initialize the ExamManager and QuestionManager with the retrieved data
-                List<Question> questions = new ArrayList<>();
-                examManager = new ExamManager(examId, examTitle, examDate, examDuration, questions);
-                questionManager = new QuestionManager(questions);
-
-                // Set the exam title to the TextView
-                TextView tvExamTitle = findViewById(R.id.tv_exam_title);
-                tvExamTitle.setText(examTitle);
-
-                // ... (other initialization code)
-            } else {
-                // Handle the case where the document doesn't exist
-            }
-        })
-        .addOnFailureListener(e -> {
-            // Handle failure
-        });
+    // ...
+    etShortAnswer = findViewById(R.id.et_short_answer);
+    // ...
 }
 ```
 
-In this updated code, we retrieve the exam document ID from the intent extras and use it to fetch the exam details from Firebase. Once we have the exam title, date, and duration, we initialize the `ExamManager` and `QuestionManager` with the retrieved data, and we set the exam title to the `TextView` with the ID `tv_exam_title`.
+### 1.3 Update the onExamDataFetched callback
 
-3. In the `ExamManagementActivity`, when launching the `ExamEditorActivity`, pass only the exam document ID as an extra in the intent:
+In the `onExamDataFetched` callback method, modify the code that handles short answer questions:
 
 ```java
-// In the onExamClick method
 @Override
-public void onExamClick(Exam exam) {
-    // Launch the ExamEditorActivity and pass the exam data
-    Intent intent = new Intent(this, ExamEditorActivity.class);
-    intent.putExtra("examId", exam.getId());
-    startActivity(intent);
-}
+public void onExamDataFetched(Exam exam) {
+    // ...
 
-// In the createAndLaunchExamEditor method
-private void createAndLaunchExamEditor(String examTitle, String examDate, int examDuration) {
-    // Create a new exam document in Firestore
-    Map<String, Object> examData = new HashMap<>();
-    examData.put("title", examTitle);
-    examData.put("date", examDate);
-    examData.put("duration", examDuration);
+    // Set up the RecyclerView and ExamQuestionAdapter
+    List<Question> questions = exam.getQuestions();
+    examQuestionAdapter = new ExamQuestionAdapter(questions);
+    rvQuestionList.setLayoutManager(new LinearLayoutManager(ExamActivity.this));
+    rvQuestionList.setAdapter(examQuestionAdapter);
 
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    db.collection("exams")
-            .add(examData)
-            .addOnSuccessListener(documentReference -> {
-                // Exam document created successfully
-                String examId = documentReference.getId();
+    // Add the short answer EditText to the container
+    llShortAnswerContainer.addView(etShortAnswer);
 
-                // Pass the exam ID to the ExamEditorActivity
-                Intent intent = new Intent(ExamManagementActivity.this, ExamEditorActivity.class);
-                intent.putExtra("examId", examId);
-                startActivity(intent);
-            })
-            .addOnFailureListener(e -> {
-                // Error creating exam document
-                Toast.makeText(ExamManagementActivity.this, "Failed to create exam: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
+    for (int i = 0; i < questions.size(); i++) {
+        Question question = questions.get(i);
+        if (question.getType() != QuestionType.SHORT_ANSWER) {
+            // Remove the short answer EditText from the container
+            llShortAnswerContainer.removeView(etShortAnswer);
+        }
+    }
+
+    // Start the countdown timer
+    startCountdownTimer();
 }
 ```
 
-In these updated methods, we only pass the exam document ID as an extra in the intent when launching the `ExamEditorActivity`.
+This code adds the `etShortAnswer` view to the `llShortAnswerContainer` and removes it when a non-short answer question is encountered.
 
-By following these steps, the `ExamEditorActivity` will retrieve the exam title and other details directly from Firebase using the exam document ID, and display the exam title in the `TextView` with the ID `tv_exam_title`.
+### 1.4 Update the submitExam method
+
+In the `submitExam` method, modify the code that handles short answer questions:
+
+```java
+private void submitExam() {
+    // Retrieve the user's selected answers from the ExamQuestionAdapter
+    List<String> userAnswers = examQuestionAdapter.getUserAnswers();
+
+    // Handle short answer questions
+    int shortAnswerIndex = 0;
+    for (int i = 0; i < userAnswers.size(); i++) {
+        if (userAnswers.get(i) == null) {
+            String shortAnswer = etShortAnswer.getText().toString();
+            userAnswers.set(i, shortAnswer);
+            shortAnswerIndex++;
+        }
+    }
+
+    // Submit the answers to Firebase Firestore or any other data source
+    submitAnswersToFirestore(userAnswers);
+}
+```
+
+This code retrieves the text from the `etShortAnswer` view and adds it to the `userAnswers` list for short answer questions.
+
+## Step 2: Update the activity_exam.xml layout file
+
+In the `activity_exam.xml` layout file, add the `etShortAnswer` view inside the `ll_short_answer_container`:
+
+```xml
+<LinearLayout
+    android:id="@+id/ll_short_answer_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/et_short_answer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter your answer"
+        android:visibility="gone" />
+
+</LinearLayout>
+```
+
+The `visibility` attribute is set to `gone` initially, as the `EditText` will be made visible only when a short answer question is encountered.
+
+With these changes, you should have a single answer box displayed for short answer questions, and it will be hidden for other question types.
