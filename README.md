@@ -1,108 +1,90 @@
-To retrieve the exam data from Firebase Firestore and display the questions without the answers in the `ExamActivity`, you can follow these steps:
+# Exam Management System
 
-1. Create a new class called `ExamRepository` or `FirestoreManager` (or any other name you prefer) to handle the interaction with Firebase Firestore.
+## Description
+The Exam Management System is a comprehensive platform designed to streamline the process of managing exams, students, and results. This project aims to provide a user-friendly interface for administrators, teachers, and students to handle all aspects of exam management efficiently.
 
-2. In the `ExamRepository` class, create a method to fetch the exam data from Firestore. Here's an example implementation:
+## Features
+- User authentication and authorization
+- Role-based access control for administrators, teachers, and students
+- Create, update, and delete exams
+- Manage student information
+- Record and view exam results
+- Generate reports and analytics
 
-```java
-public class ExamRepository {
-    private static final String EXAMS_COLLECTION = "exams";
-    private static final String QUESTIONS_COLLECTION = "questions";
+## Installation
 
-    private FirebaseFirestore firestore;
+### Prerequisites
+- Python 3.x
+- Django
+- Other dependencies listed in `requirements.txt`
 
-    public ExamRepository() {
-        firestore = FirebaseFirestore.getInstance();
-    }
+### Steps
+1. **Clone the repository**
+    ```sh
+    git clone https://github.com/abirmehmed/Exam_managment_system-.git
+    cd Exam_managment_system-
+    ```
 
-    public void getExamData(String examId, OnExamDataFetchedListener listener) {
-        firestore.collection(EXAMS_COLLECTION)
-                .document(examId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        Exam exam = documentSnapshot.toObject(Exam.class);
-                        exam.setId(documentSnapshot.getId());
+2. **Create and activate a virtual environment**
+    ```sh
+    python -m venv env
+    source env/bin/activate  # On Windows use `env\Scripts\activate`
+    ```
 
-                        firestore.collection(EXAMS_COLLECTION)
-                                .document(examId)
-                                .collection(QUESTIONS_COLLECTION)
-                                .get()
-                                .addOnSuccessListener(querySnapshot -> {
-                                    List<Question> questions = new ArrayList<>();
-                                    for (QueryDocumentSnapshot document : querySnapshot) {
-                                        Question question = document.toObject(Question.class);
-                                        question.setDocumentId(document.getId());
-                                        questions.add(question);
-                                    }
-                                    exam.setQuestions(questions);
-                                    listener.onExamDataFetched(exam);
-                                })
-                                .addOnFailureListener(e -> listener.onExamDataFetchFailed(e));
-                    } else {
-                        listener.onExamDataFetchFailed(new Exception("Exam not found"));
-                    }
-                })
-                .addOnFailureListener(e -> listener.onExamDataFetchFailed(e));
-    }
+3. **Install dependencies**
+    ```sh
+    pip install -r requirements.txt
+    ```
 
-    public interface OnExamDataFetchedListener {
-        void onExamDataFetched(Exam exam);
-        void onExamDataFetchFailed(Exception e);
-    }
-}
-```
+4. **Run migrations**
+    ```sh
+    python manage.py migrate
+    ```
 
-3. In the `ExamActivity`, create an instance of the `ExamRepository` and call the `getExamData` method to fetch the exam data.
+5. **Create a superuser**
+    ```sh
+    python manage.py createsuperuser
+    ```
 
-```java
-private ExamRepository examRepository;
+6. **Start the development server**
+    ```sh
+    python manage.py runserver
+    ```
 
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_exam);
+7. **Access the application**
+    Open your web browser and navigate to `http://127.0.0.1:8000/`
 
-    // ... (other initialization code)
+## Usage
 
-    examRepository = new ExamRepository();
-    String examId = "ea9gXqquWPBMhUXGPpPK"; // Replace with the actual exam ID
-    examRepository.getExamData(examId, new ExamRepository.OnExamDataFetchedListener() {
-        @Override
-        public void onExamDataFetched(Exam exam) {
-            // Set up the exam details
-            tvExamName.setText(exam.getTitle());
-            examDurationMillis = exam.getDuration() * 60 * 1000;
+### Administrator
+- Log in with the superuser account.
+- Create and manage exams, students, and teachers.
+- Assign roles and permissions.
 
-            // Set up the RecyclerView and QuestionAdapter
-            List<Question> questions = exam.getQuestions();
-            questionAdapter = new QuestionAdapter(questions);
-            rvQuestionList.setLayoutManager(new LinearLayoutManager(ExamActivity.this));
-            rvQuestionList.setAdapter(questionAdapter);
+### Teacher
+- Log in with teacher credentials.
+- Create and manage their own exams.
+- Enter and update student results.
 
-            // Start the countdown timer
-            startCountdownTimer();
-        }
+### Student
+- Log in with student credentials.
+- View their exam schedule and results.
 
-        @Override
-        public void onExamDataFetchFailed(Exception e) {
-            // Handle the error
-        }
-    });
-}
-```
+## Contributing
+Contributions are welcome! Please follow these steps to contribute:
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature-branch`).
+3. Make your changes.
+4. Commit your changes (`git commit -m 'Add new feature'`).
+5. Push to the branch (`git push origin feature-branch`).
+6. Create a new Pull Request.
 
-4. In the `QuestionAdapter`, modify the `bind` method to hide the answer for each question. You can remove the code that sets the answer or make it conditional based on whether the exam has been submitted or not.
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-```java
-public void bind(QuestionViewHolder holder, Question question, int position) {
-    // ... (other code)
+## Contact
+For any questions or feedback, please contact:
+- Abir Mehmed
+- [Email](mailto:abirmehmed@gmail.com)
+- [GitHub](https://github.com/abirmehmed)
 
-    // Hide the answer
-    holder.answerEditText.setVisibility(View.GONE);
-}
-```
-
-With these changes, when you click on an exam from the list, the `ExamActivity` will fetch the exam data from Firebase Firestore, including the questions. The questions will be displayed in the `RecyclerView` without showing the answers. When the user submits the exam, you can retrieve the answers from the `QuestionAdapter` and submit them to Firebase Firestore or any other data source.
-
-Note: Make sure to update the `Exam` and `Question` classes to match the structure of the data in Firebase Firestore, and handle any additional fields or properties as needed.
