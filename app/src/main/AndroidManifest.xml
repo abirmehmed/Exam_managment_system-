@@ -61,6 +61,10 @@
             android:exported="false" />
         <activity
             android:name=".activities.QuestionEditorActivity" />
+        <activity
+            android:name=".activities.ExamListActivity" />
+        <activity
+            android:name=".activities.ExamActivity" />
 
     </application>
 

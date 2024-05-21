@@ -68,7 +68,9 @@ public class StudentHomepageActivity extends AppCompatActivity {
         });
 
         btnViewExams.setOnClickListener(v -> {
-            // Handle view exams button click
+            // Launch the ExamListActivity
+            Intent intent = new Intent(StudentHomepageActivity.this, ExamListActivity.class);
+            startActivity(intent);
         });
 
         btnViewGrades.setOnClickListener(v -> {
@@ -83,6 +85,7 @@ public class StudentHomepageActivity extends AppCompatActivity {
             // Handle log out button click
         });
     }
+
 
     private void openImagePicker() {
         // Open the image picker dialog

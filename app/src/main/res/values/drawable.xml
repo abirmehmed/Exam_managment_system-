@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <drawable name="login_background">@drawable/account</drawable>
+    <drawable name="login_background">@drawable/ic_launcher_background</drawable>
 </resources>
