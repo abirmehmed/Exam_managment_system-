@@ -1,102 +1,108 @@
-To display question numbers in front of each question, you can modify the `ExamQuestionAdapter` and the `ExamQuestionViewHolder` class. Here's how you can update the code:
+Sure, here's a step-by-step guide on how to implement the solution:
 
-1. In the `ExamQuestionAdapter` class, add a new variable to keep track of the question number:
+## Step 1: Update the ExamActivity class
+
+### 1.1 Add a new instance variable for the EditText
+
+In the `ExamActivity` class, add a new instance variable for the `EditText` that will be used for short answer questions:
 
 ```java
-public class ExamQuestionAdapter extends RecyclerView.Adapter<ExamQuestionAdapter.ExamQuestionViewHolder> {
-    private List<Question> questions;
-    private List<String> userAnswers;
-    private int questionNumber = 1; // Initialize the question number to 1
-
-    // ... (rest of the code)
-}
+private EditText etShortAnswer;
 ```
 
-2. In the `onBindViewHolder` method of the `ExamQuestionAdapter` class, pass the `questionNumber` to the `bind` method of the `ExamQuestionViewHolder`:
+### 1.2 Initialize the etShortAnswer view
+
+In the `onCreate` method, initialize the `etShortAnswer` view by finding it in the layout:
 
 ```java
 @Override
-public void onBindViewHolder(@NonNull ExamQuestionViewHolder holder, int position) {
-    Question question = questions.get(position);
-    holder.bind(question, position, questionNumber++); // Pass the questionNumber and increment it
+protected void onCreate(Bundle savedInstanceState) {
+    // ...
+    etShortAnswer = findViewById(R.id.et_short_answer);
+    // ...
 }
 ```
 
-3. In the `ExamQuestionViewHolder` class, update the `bind` method to accept the `questionNumber` and display it in front of the question text:
+### 1.3 Update the onExamDataFetched callback
+
+In the `onExamDataFetched` callback method, modify the code that handles short answer questions:
 
 ```java
-class ExamQuestionViewHolder extends RecyclerView.ViewHolder {
-    TextView tvQuestionText;
-    RadioGroup rgOptions;
+@Override
+public void onExamDataFetched(Exam exam) {
+    // ...
 
-    ExamQuestionViewHolder(@NonNull View itemView) {
-        super(itemView);
-        tvQuestionText = itemView.findViewById(R.id.tv_question_text);
-        rgOptions = itemView.findViewById(R.id.rg_options);
+    // Set up the RecyclerView and ExamQuestionAdapter
+    List<Question> questions = exam.getQuestions();
+    examQuestionAdapter = new ExamQuestionAdapter(questions);
+    rvQuestionList.setLayoutManager(new LinearLayoutManager(ExamActivity.this));
+    rvQuestionList.setAdapter(examQuestionAdapter);
+
+    // Add the short answer EditText to the container
+    llShortAnswerContainer.addView(etShortAnswer);
+
+    for (int i = 0; i < questions.size(); i++) {
+        Question question = questions.get(i);
+        if (question.getType() != QuestionType.SHORT_ANSWER) {
+            // Remove the short answer EditText from the container
+            llShortAnswerContainer.removeView(etShortAnswer);
+        }
     }
 
-    void bind(Question question, int position, int questionNumber) {
-        tvQuestionText.setText(questionNumber + ". " + question.getText());
-        rgOptions.removeAllViews();
-
-        // ... (rest of the code)
-    }
+    // Start the countdown timer
+    startCountdownTimer();
 }
 ```
 
-In the updated `bind` method, we're concatenating the `questionNumber` with the question text using `questionNumber + ". " + question.getText()` and setting it to the `tvQuestionText`.
+This code adds the `etShortAnswer` view to the `llShortAnswerContainer` and removes it when a non-short answer question is encountered.
 
-After making these changes, your `ExamQuestionAdapter` and `ExamQuestionViewHolder` classes should look like this:
+### 1.4 Update the submitExam method
+
+In the `submitExam` method, modify the code that handles short answer questions:
 
 ```java
-public class ExamQuestionAdapter extends RecyclerView.Adapter<ExamQuestionAdapter.ExamQuestionViewHolder> {
-    private List<Question> questions;
-    private List<String> userAnswers;
-    private int questionNumber = 1; // Initialize the question number to 1
+private void submitExam() {
+    // Retrieve the user's selected answers from the ExamQuestionAdapter
+    List<String> userAnswers = examQuestionAdapter.getUserAnswers();
 
-    // ... (constructor and other methods)
-
-    @NonNull
-    @Override
-    public ExamQuestionViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_exam_question, parent, false);
-        return new ExamQuestionViewHolder(view);
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull ExamQuestionViewHolder holder, int position) {
-        Question question = questions.get(position);
-        holder.bind(question, position, questionNumber++); // Pass the questionNumber and increment it
-    }
-
-    // ... (rest of the code)
-
-    class ExamQuestionViewHolder extends RecyclerView.ViewHolder {
-        TextView tvQuestionText;
-        RadioGroup rgOptions;
-
-        ExamQuestionViewHolder(@NonNull View itemView) {
-            super(itemView);
-            tvQuestionText = itemView.findViewById(R.id.tv_question_text);
-            rgOptions = itemView.findViewById(R.id.rg_options);
-        }
-
-        void bind(Question question, int position, int questionNumber) {
-            tvQuestionText.setText(questionNumber + ". " + question.getText());
-            rgOptions.removeAllViews();
-
-            // ... (rest of the code)
+    // Handle short answer questions
+    int shortAnswerIndex = 0;
+    for (int i = 0; i < userAnswers.size(); i++) {
+        if (userAnswers.get(i) == null) {
+            String shortAnswer = etShortAnswer.getText().toString();
+            userAnswers.set(i, shortAnswer);
+            shortAnswerIndex++;
         }
     }
+
+    // Submit the answers to Firebase Firestore or any other data source
+    submitAnswersToFirestore(userAnswers);
 }
 ```
 
-With these changes, each question in the `RecyclerView` should be displayed with a question number in front of it, like:
+This code retrieves the text from the `etShortAnswer` view and adds it to the `userAnswers` list for short answer questions.
 
-```
-1. Question text
-2. Question text
-3. Question text
+## Step 2: Update the activity_exam.xml layout file
+
+In the `activity_exam.xml` layout file, add the `etShortAnswer` view inside the `ll_short_answer_container`:
+
+```xml
+<LinearLayout
+    android:id="@+id/ll_short_answer_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <EditText
+        android:id="@+id/et_short_answer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter your answer"
+        android:visibility="gone" />
+
+</LinearLayout>
 ```
 
-Make sure to update the `item_exam_question.xml` layout file if needed, to accommodate the longer question text with the question number.
+The `visibility` attribute is set to `gone` initially, as the `EditText` will be made visible only when a short answer question is encountered.
+
+With these changes, you should have a single answer box displayed for short answer questions, and it will be hidden for other question types.
